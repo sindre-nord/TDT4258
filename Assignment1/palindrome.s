@@ -24,15 +24,15 @@ check_input:
 	// long and ends with a null byte
 	
 	//Check the first char
-	ldrb r2, [r0] //Load one byte from adr r0
-	cmp r2, #0  // Check if its the null
-	beq string_length_counted //If null string then the string is completed
-	add r1, r1, #1 //If there is another char then just count it and continue
-	add r0, r0, #1 //Increment the address
+	ldrb r2, [r0] 				// Load one byte from adr r0
+	cmp r2, #0  				// Check if its the null
+	beq string_length_counted 	// If null string then the string is completed
+	add r1, r1, #1 				// If there is another char then just count it and continue
+	add r0, r0, #1 				// Increment the address
 	b check_input
 	
 string_length_counted:
-	bl check_palindrom //If the string is completed then check if its a palindrom
+	bl check_palindrom // If the string is completed then check if its a palindrom
 	b _exit
 	
 	
@@ -53,56 +53,56 @@ check_palindrom:
 	// The first char can be stored in r5
 	// The last char can be stored in r6
 
-	mov r3, r8 //Offset
-	mov r4, r8 //Offset
-	sub r4, r4, #1 //Subtract 1 from the offset to get the last char
-	add r4, r4, r1	//Add the offset to the address to get the last char
+	mov r3, r8 		// Offset
+	mov r4, r8 		// Offset
+	sub r4, r4, #1 	// Subtract 1 from the offset to get the last char
+	add r4, r4, r1	// Add the offset to the address to get the last char
 	
 loop:
 
 
 get_first_char:
-	ldrb r5, [r3] //Load the first char
-	add r3, r3, #1 //Increment the offset from the left
-	cmp r5, #0x20 //Check if its a space
-	beq get_first_char //If its a space then get the next char
+	ldrb r5, [r3] 		// Load the first char
+	add r3, r3, #1 		// Increment the offset from the left
+	cmp r5, #0x20 		// Check if its a space
+	beq get_first_char 	// If its a space then get the next char
 
 get_last_char:
-	ldrb r6, [r4] //Load the last char
-	sub r4, r4, #1 //Decrement the offset from the right
-	cmp r6, #0x20 //Check if its a space
-	beq get_last_char //If its a space then get the next char
+	ldrb r6, [r4] 		// Load the last char
+	sub r4, r4, #1 		// Decrement the offset from the right
+	cmp r6, #0x20 		// Check if its a space
+	beq get_last_char 	// If its a space then get the next char
 
 compare_chars:
-	cmp r5, r6 //Compare the chars
-	bne is_no_palindrom //If they are not equal then its not a palindrome
-	cmp r3, r4 //Check if we have reached the middle
-	// Need to also end the program if we have reached the middle or past
-	blt loop //If not then continue
+	cmp r5, r6 			// Compare the chars
+	bne is_no_palindrom // If they are not equal then its not a palindrome
+	cmp r3, r4 			// Check if we have reached the middle
+	blt loop 			// If the offset from the left is less than the offset from the right then loop
+						// if not then the string is a palindrome
 	
-	b is_palindrom //If we have reached the middle then its a palindrome
+	b is_palindrom 		//If we have reached the middle (or beyond) then its a palindrome
 
 is_palindrom:
 	// Switch on only the 5 leftmost LEDs
 	// Write 'Palindrom detected' to UART
-	bl reset_leds //Reset the LEDs
+	bl reset_leds 	//Reset the LEDs
 	ldr r11, =0x3E0 //Equates to 0000011111 calculated with at binary to HEX converter
-	str r11, [r10] //Write the value to the LEDs
-	b _exit
+	str r11, [r10] 	//Store the value into the control register
+b _exit 			//Return
 	
 
 is_no_palindrom:
 	// Switch on only the 5 rightmost LEDs
 	// Write 'Not a palindrom' to UART
-	bl reset_leds //Reset the LEDs
-	ldr r11, =0x1F
-	str r11, [r10]
-	b _exit//Return
+	bl reset_leds 	//Reset the LEDs
+	ldr r11, =0x1F 	//Equates to 00011111 calculated with at binary to HEX converter
+	str r11, [r10] 	//Store the value into the control register
+	b _exit			//Return
 
 reset_leds:
-    ldr r7, =0x00
-    str r7, [r10]
-    bx lr
+    ldr r7, =0x00 	//We want to set all the bits to 0
+    str r7, [r10] 	//Load it to the control register
+    bx lr 			//Return
 
 _exit:
 	// Branch here for exit
