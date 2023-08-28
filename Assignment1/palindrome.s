@@ -54,11 +54,14 @@ check_palindrom:
 	// The last char can be stored in r6
 
 	mov r3, r8 //Offset
-	mov r4, r1 //Offset
+	mov r4, r8 //Offset
 	sub r4, r4, #1 //Subtract 1 from the offset to get the last char
-	add r4, r4, r8	//Add the offset to the address to get the last char
+	add r4, r4, r1	//Add the offset to the address to get the last char
 	
 loop:
+
+
+get_first_char:
 	ldrb r5, [r3] //Load the first char
 	add r3, r3, #1 //Increment the offset from the left
 	cmp r5, #0x20 //Check if its a space
@@ -73,8 +76,6 @@ get_last_char:
 compare_chars:
 	cmp r5, r6 //Compare the chars
 	bne is_no_palindrom //If they are not equal then its not a palindrome
-	add r3, r3, #1 //Increment the offset from the left
-	sub r4, r4, #1 //Decrement the offset from the right
 	cmp r3, r4 //Check if we have reached the middle
 	// Need to also end the program if we have reached the middle or past
 	blt loop //If not then continue
@@ -89,7 +90,7 @@ is_palindrom:
 	str r11, [r10] //Write the value to the LEDs
 	b _exit
 	
-	
+
 is_no_palindrom:
 	// Switch on only the 5 rightmost LEDs
 	// Write 'Not a palindrom' to UART
@@ -113,5 +114,5 @@ _exit:
 	// You can modify the string during development, however you
 	// are not allowed to change the name 'input'!
 	//input: .asciz "Grav ned den varg"
-	input: .asciz "heieh"
+	input: .asciz "heirieh"
 .end
