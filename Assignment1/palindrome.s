@@ -76,16 +76,15 @@ compare_chars:
 	add r3, r3, #1 //Increment the offset from the left
 	sub r4, r4, #1 //Decrement the offset from the right
 	cmp r3, r4 //Check if we have reached the middle
-	bne loop //If not then continue
+	// Need to also end the program if we have reached the middle or past
+	blt loop //If not then continue
 	
 	b is_palindrom //If we have reached the middle then its a palindrome
 
 is_palindrom:
 	// Switch on only the 5 leftmost LEDs
 	// Write 'Palindrom detected' to UART
-	//mov r9, lr //Save the return address
 	bl reset_leds //Reset the LEDs
-	//mov lr, r9 //Restore the return address
 	ldr r11, =0x3E0 //Equates to 0000011111 calculated with at binary to HEX converter
 	str r11, [r10] //Write the value to the LEDs
 	b _exit
@@ -94,9 +93,7 @@ is_palindrom:
 is_no_palindrom:
 	// Switch on only the 5 rightmost LEDs
 	// Write 'Not a palindrom' to UART
-	//mov r9, lr //Save the return address
 	bl reset_leds //Reset the LEDs
-	//mov lr, r9 //Restore the return address
 	ldr r11, =0x1F
 	str r11, [r10]
 	b _exit//Return
@@ -116,5 +113,9 @@ _exit:
 	// You can modify the string during development, however you
 	// are not allowed to change the name 'input'!
 	//input: .asciz "Grav ned den varg"
+<<<<<<< HEAD
 	input: .asciz "heieh h"
+=======
+	input: .asciz "he ieh"
+>>>>>>> dev
 .end
