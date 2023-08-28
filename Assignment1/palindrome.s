@@ -77,7 +77,8 @@ compare_chars:
 	cmp r5, r6 //Compare the chars
 	bne is_no_palindrom //If they are not equal then its not a palindrome
 	cmp r3, r4 //Check if we have reached the middle
-	bne loop //If not then continue
+	// Need to also end the program if we have reached the middle or past
+	blt loop //If not then continue
 	
 	b is_palindrom //If we have reached the middle then its a palindrome
 
