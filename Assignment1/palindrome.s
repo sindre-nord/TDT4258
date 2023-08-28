@@ -60,7 +60,17 @@ check_palindrom:
 	
 loop:
 	ldrb r5, [r3] //Load the first char
+	add r3, r3, #1 //Increment the offset from the left
+	cmp r5, #0x20 //Check if its a space
+	beq get_first_char //If its a space then get the next char
+
+get_last_char:
 	ldrb r6, [r4] //Load the last char
+	sub r4, r4, #1 //Decrement the offset from the right
+	cmp r6, #0x20 //Check if its a space
+	beq get_last_char //If its a space then get the next char
+
+compare_chars:
 	cmp r5, r6 //Compare the chars
 	bne is_no_palindrom //If they are not equal then its not a palindrome
 	add r3, r3, #1 //Increment the offset from the left
