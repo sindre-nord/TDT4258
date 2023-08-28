@@ -8,11 +8,11 @@
 
 _start:
 	// Here your execution starts
-	ldr r10, =0xFF200000 //Load the address of the LEDs
+	ldr r10, =0xFF200000 	// Load the address of the LEDs
 
 	ldr r0, =input
 	ldr r8, =input
-	mov r1, #0 //Set the input length counter to 0
+	mov r1, #0 				// Set the input length counter to 0
 	bl check_input
 	bl check_palindrom
 	//b _exit
@@ -66,12 +66,25 @@ get_first_char:
 	add r3, r3, #1 		// Increment the offset from the left
 	cmp r5, #0x20 		// Check if its a space
 	beq get_first_char 	// If its a space then get the next char
+	
+	// Because of one of the constraints in the task, we will never get any other chars
+	// that is not within {0-9, A-Z, a-z}. Therefore we only need to check if the char
+	// is above 0x61. If this is the case it will be a lowercase letter, and we only need to subtract
+	// 0x20 to get the uppercase letter. If its not above 0x61 then its a uppercase letter or number
+
+	cmp r5, #0x61 		// Check if its a lowercase letter
+	blt get_last_char 	// If its not a lowercase letter then move on
+	sub r5, r5, #0x20 	// If its a lowercase letter then subtract 0x20 to get the uppercase letter
 
 get_last_char:
 	ldrb r6, [r4] 		// Load the last char
 	sub r4, r4, #1 		// Decrement the offset from the right
 	cmp r6, #0x20 		// Check if its a space
 	beq get_last_char 	// If its a space then get the next char
+
+	cmp r6, #0x61 		// Check if its a lowercase letter
+	blt compare_chars 	// If its not a lowercase letter then move on
+	sub r6, r6, #0x20 	// If its a lowercase letter then subtract 0x20 to get the uppercase letter
 
 compare_chars:
 	cmp r5, r6 			// Compare the chars
@@ -94,15 +107,15 @@ b _exit 			//Return
 is_no_palindrom:
 	// Switch on only the 5 rightmost LEDs
 	// Write 'Not a palindrom' to UART
-	bl reset_leds 	//Reset the LEDs
-	ldr r11, =0x1F 	//Equates to 00011111 calculated with at binary to HEX converter
-	str r11, [r10] 	//Store the value into the control register
-	b _exit			//Return
+	bl reset_leds 	// Reset the LEDs
+	ldr r11, =0x1F 	// Equates to 00011111 calculated with at binary to HEX converter
+	str r11, [r10] 	// Store the value into the control register
+	b _exit			// Return
 
 reset_leds:
-    ldr r7, =0x00 	//We want to set all the bits to 0
-    str r7, [r10] 	//Load it to the control register
-    bx lr 			//Return
+    ldr r7, =0x00 	// We want to set all the bits to 0
+    str r7, [r10] 	// Load it to the control register
+    bx lr 			// Return
 
 _exit:
 	// Branch here for exit
