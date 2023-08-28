@@ -113,9 +113,5 @@ _exit:
 	// You can modify the string during development, however you
 	// are not allowed to change the name 'input'!
 	//input: .asciz "Grav ned den varg"
-<<<<<<< HEAD
-	input: .asciz "heieh h"
-=======
-	input: .asciz "he ieh"
->>>>>>> dev
+	input: .asciz "heieh"
 .end
