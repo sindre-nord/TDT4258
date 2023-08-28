@@ -64,13 +64,13 @@ loop:
 get_first_char:
 	ldrb r5, [r3] //Load the first char
 	add r3, r3, #1 //Increment the offset from the left
-	cmp r5, #20 //Check if its a space
+	cmp r5, #0x20 //Check if its a space
 	beq get_first_char //If its a space then get the next char
 
 get_last_char:
 	ldrb r6, [r4] //Load the last char
 	sub r4, r4, #1 //Decrement the offset from the right
-	cmp r6, #20 //Check if its a space
+	cmp r6, #0x20 //Check if its a space
 	beq get_last_char //If its a space then get the next char
 
 compare_chars:
