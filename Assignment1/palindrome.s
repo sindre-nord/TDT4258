@@ -84,9 +84,7 @@ compare_chars:
 is_palindrom:
 	// Switch on only the 5 leftmost LEDs
 	// Write 'Palindrom detected' to UART
-	//mov r9, lr //Save the return address
 	bl reset_leds //Reset the LEDs
-	//mov lr, r9 //Restore the return address
 	ldr r11, =0x3E0 //Equates to 0000011111 calculated with at binary to HEX converter
 	str r11, [r10] //Write the value to the LEDs
 	b _exit
@@ -95,9 +93,7 @@ is_palindrom:
 is_no_palindrom:
 	// Switch on only the 5 rightmost LEDs
 	// Write 'Not a palindrom' to UART
-	//mov r9, lr //Save the return address
 	bl reset_leds //Reset the LEDs
-	//mov lr, r9 //Restore the return address
 	ldr r11, =0x1F
 	str r11, [r10]
 	b _exit//Return
@@ -117,5 +113,5 @@ _exit:
 	// You can modify the string during development, however you
 	// are not allowed to change the name 'input'!
 	//input: .asciz "Grav ned den varg"
-	input: .asciz "heieh"
+	input: .asciz "he ieh"
 .end
