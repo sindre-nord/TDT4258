@@ -126,6 +126,5 @@ _exit:
 	// This is the input you are supposed to check for a palindrom
 	// You can modify the string during development, however you
 	// are not allowed to change the name 'input'!
-	//input: .asciz "Grav ned den varg"
-	input: .asciz "heirieh"
+	input: .asciz "Grav ned den varg"
 .end
