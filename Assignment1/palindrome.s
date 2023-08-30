@@ -99,43 +99,51 @@ is_palindrom:
 	// Switch on only the 5 leftmost LEDs
 	// Write 'Palindrom detected' to UART
 	bl reset_leds 	//Reset the LEDs
-	ldr r11, =0x3E0 //Equates to 0000011111 calculated with at binary to HEX converter
+	ldr r11, =0x1F  //Equates to 0000011111 calculated with at binary to HEX converter
 	str r11, [r10] 	//Store the value into the control register
 
 	//Write 'Palindrom detected' to UART
 	ldr r0, =palindrom_detected
-	bl write_uart
+	b write_uart
 
-	b _exit 			//Return
+	//b _exit 			//Return
 
 is_no_palindrom:
 	// Switch on only the 5 rightmost LEDs
 	// Write 'Not a palindrom' to UART
 	bl reset_leds 	// Reset the LEDs
-	ldr r11, =0x1F 	// Equates to 00011111 calculated with at binary to HEX converter
+	ldr r11, =0x3E0	// Equates to 00011111 calculated with at binary to HEX converter
 	str r11, [r10] 	// Store the value into the control register
 
 	//Write 'Not a palindrom' to UART
 	ldr r0, =not_a_palindrom
-	bl write_uart
+	b write_uart
 
-	b _exit			// Return
+	//b _exit			// Return
 
+
+// This section is strongly inspired by the code
+// from the DE1-SoC manual and its example of JTAG in ARM
+// Name: Intel FPGA University Program DE1-SoC Computer Manual
+// Author: Intel
 write_uart:
 	//Assumes that the string to be printed is located in r0
 	//Assumes that the UART is located at 0xFF201000
-	ldr r1, =0xFF201000 //Load the address of the UART
-	ldr r2, [r0] 		//Load the first char
+//	ldr r2, =input
 loop_uart:
-	ldrb r3, [r2] 		//Load one byte from adr r2
+	ldrb r3, [r0] 		//Load one byte from adr r0
+	
 	cmp r3, #0 			//Check if its the null
 	beq end_uart 		//If null string then the string is completed
+
+	ldr r1, =0xFF201000 //Load the address of the UART
 	str r3, [r1] 		//Store the char in the UART
-	add r2, r2, #1 		//Increment the address
+	
+	add r0, r0, #1 		//Increment the address
 	b loop_uart
 end_uart:
-	bx lr 				//Return
-
+	//bx lr 				//Return
+	b _exit				// Return
 
 reset_leds:
     ldr r7, =0x00 	// We want to set all the bits to 0
@@ -152,6 +160,8 @@ _exit:
 	// You can modify the string during development, however you
 	// are not allowed to change the name 'input'!
 	input: .asciz "Grav ned den varg"
+	
+	// input: .asciz "9GraV ne0d d0en varg9"
 
 	not_a_palindrom: .asciz "Not a palindrom"
 	palindrom_detected: .asciz "Palindrom detected"
