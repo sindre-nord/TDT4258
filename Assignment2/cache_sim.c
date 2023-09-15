@@ -33,7 +33,7 @@ cache_stat_t cache_stat;
 
 // DECLARE CACHES AND COUNTERS FOR THE STATS HERE
 #define MAX_TRACE_FILE_LINE_LENGTH 256
-#define ACCES_TYPE_LENGTH 2
+#define ACCESS_TYPE_LENGTH 2
 #define ADDRESS_LENGTH 8
 
 // Declaring constants here
@@ -182,10 +182,9 @@ void direct_mapped_sim(void){
         
         char line[MAX_TRACE_FILE_LINE_LENGTH];
         while(fgets(line, sizeof(line), trace_file)){
-            char accesstype[ACCES_TYPE_LENGTH];
+            char accesstype[ACCESS_TYPE_LENGTH];
             char    address[ADDRESS_LENGTH];
             sscanf(line, "%s %s", accesstype, address);
-
             uint32_t address_int = strtoul(address, NULL, 16); // 16 is the base
 
             mem_access_t mem_access;
@@ -238,14 +237,6 @@ void direct_mapped_sim(void){
             unified_cache[index].valid = 0;
         }
 
-        // Feach each line in trace file, 
-        // Evaluate if it is a hit or miss
-        // Update the stats
-        // Update the cache based on the hit or miss
-        // Repeat until the end of the trace file
-        // Print the stats
-        // Free the memory
-
         // Open the trace file
         FILE *trace_file;
         trace_file = fopen("mem_trace2.txt", "r");
@@ -257,24 +248,16 @@ void direct_mapped_sim(void){
         // Read trace file line by line, \n is the delimiter
         char line[MAX_TRACE_FILE_LINE_LENGTH];
         while(fgets(line, sizeof(line), trace_file)){
-            // Parse the line (Just realized that we could have used sscanf because the format is known)
-            // strtok is a function that splits a string into tokens based on a delimiter, in this case " "
-            // sscanf is a function that reads formatted input from a string and places the results into a buffer
-            char *token;
-            token = strtok(line, " ");
-            char *accesstype = token;
-            token = strtok(NULL, " ");
-            char *address = token;
 
-            //printf("Address: %s\n", address);
-            //printf("Access type: %s\n", accesstype);
-
-            // Convert the address to a uint32_t
+            char accesstype[ACCESS_TYPE_LENGTH];
+            char    address[ADDRESS_LENGTH];
+            sscanf(line, "%s %s", accesstype, address);
             uint32_t address_int = strtoul(address, NULL, 16); // 16 is the base
+
 
             // Create a mem_access_t struct
             // This is not needed for a unified cache, but it will be
-            // relevant for the split cache.
+            // relevant for the split cache. Might combine the two!
             mem_access_t mem_access;
             mem_access.address = address_int;
             if(strcmp(accesstype, "I") == 0){
@@ -296,11 +279,8 @@ void direct_mapped_sim(void){
                 unified_cache[index].tag = tag;
             }
         }
-
         fclose(trace_file);     // Close the trace file
         free(unified_cache);    // Free the memory
-        
-
     }
     
 }
