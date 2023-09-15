@@ -149,6 +149,11 @@ void associative_sim(void){
     // instead we seach the whole cache-FIFO-queue for a hit. The bottom of the
     // FIFO is ejected on a miss and the requested block is placed on
     // top (Although this is just one policy on how to handle this)
+
+    // After a lot of reading it seems that a doubly linked list might be
+    // what we want in this context. As you can stich the list together at any point quite
+    // easely. Also it seems like fun things to try.
+    
     if(cache_org == sc){ // Split cache
 
     } else { //Unified cache
