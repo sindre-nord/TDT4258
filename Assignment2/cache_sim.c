@@ -163,7 +163,7 @@ void print_cache_config(){
 
 
 
-// Decleration of the doubly linked list
+// ########## Start of linked list shenanigans ##########
 typedef struct cache_line_node_t { // This could have been made more general, but I like how this is more tailored
     cache_line_t cache_line;
     struct cache_line_node_t* next;
@@ -188,8 +188,21 @@ cache_line_node_t* search_for_block_in(cache_line_queue_t* queue, uint32_t tag){
     return NULL; // No hits implicates a miss
 }
 
-
-
+void pop_back_of_queue(cache_line_queue_t* queue){
+    cache_line_node_t* last_node = queue->tail; // This is just to be able to free it later
+    queue->tail = last_node->prev;
+    queue->tail->next = NULL;
+    free(last_node);
+    return;
+}
+// Expects you to malloc a new node and put it into the queu
+void push_front_of_queue(cache_line_queue_t* queue, cache_line_node_t* node){
+    node->next = queue->head;
+    node->prev = NULL;
+    queue->head->prev = node;
+    queue->head = node;
+    return;
+}
 // Might not be ideal to have this as its own function, it assumes the block is in the queue
 void move_to_front(cache_line_queue_t* queue, cache_line_node_t* node){
     // Stitch the nabouring nodes together
@@ -205,21 +218,6 @@ void move_to_front(cache_line_queue_t* queue, cache_line_node_t* node){
 
     // Place the node in front
     push_front_of_queue(queue, node);
-    return;
-}
-void pop_back_of_queue(cache_line_queue_t* queue){
-    cache_line_node_t* last_node = queue->tail; // This is just to be able to free it later
-    queue->tail = last_node->prev;
-    queue->tail->next = NULL;
-    free(last_node);
-    return;
-}
-// Expects you to malloc a new node and put it into the queu
-void push_front_of_queue(cache_line_queue_t* queue, cache_line_node_t* node){
-    node->next = queue->head;
-    node->prev = NULL;
-    queue->head->prev = node;
-    queue->head = node;
     return;
 }
 
@@ -246,6 +244,7 @@ cache_line_queue_t* init_queue(){
 
     return new_queue;
 }
+
 void deallocate_queue(cache_line_queue_t* queue){
     cache_line_node_t* current_node = queue->head;
     while(current_node != NULL){
@@ -256,6 +255,8 @@ void deallocate_queue(cache_line_queue_t* queue){
     free(queue);
     return;
 }
+// ########## End of inked list shenanigans ##########
+
 /* Simulates an associative cache */
 void associative_sim(void){
     // The thing that differs from the direct mapped cache is that we
