@@ -1,3 +1,18 @@
+/* 
+Cache-Sim for TDT4255
+Author: Sindre Nordtveit 
+Date: 2023-09-15
+
+This sim will take some user params that desctibe different cache organizations, mapping
+and size. 
+
+Usefull for this development is the following:
+ - Wikipedia article on Cache Placement Plicies (https://en.wikipedia.org/wiki/Cache_placement_policies)
+ - DLL, Doubly Linked List (https://www.geeksforgeeks.org/introduction-and-insertion-in-a-doubly-linked-list)
+*/
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,8 +40,8 @@ typedef struct {
     uint32_t valid;
 } cache_line_t;
 
-cache_stat_t cache_stat;
 
+cache_stat_t cache_stat;
 
 // DECLARE CACHES AND COUNTERS FOR THE STATS HERE
 #define MAX_TRACE_FILE_LINE_LENGTH 256
@@ -34,7 +49,7 @@ cache_stat_t cache_stat;
 #define ADDRESS_LENGTH 8
 
 // Declaring constants here
-int block_size = 64;
+const int block_size = 64;
 
 // Declare global variables here
 int cache_size;
@@ -108,7 +123,11 @@ void calculate_config(){
     }
     num_of_blocks = cache_size/block_size;
     num_of_bits_for_block_offset = 6; // log_2(block_size) = 6 fixed at 64
-    num_of_bits_for_index = log2(num_of_blocks);
+    if(cache_map == dm){
+        num_of_bits_for_index = log2(num_of_blocks);
+    } else {
+        num_of_bits_for_index = 0;
+    }
     num_of_bits_for_tag = 32 - num_of_bits_for_index - num_of_bits_for_block_offset; // 32-bit address space
 }
 
@@ -142,6 +161,101 @@ void print_cache_config(){
 
 }
 
+
+
+// Decleration of the doubly linked list
+typedef struct cache_line_node_t { // This could have been made more general, but I like how this is more tailored
+    cache_line_t cache_line;
+    struct cache_line_node_t* next;
+    struct cache_line_node_t* prev;
+} cache_line_node_t;
+
+typedef struct cache_line_queue_t {
+    cache_line_node_t* head; //Gives you the first item
+    cache_line_node_t* tail; // Conveinience feature.
+    uint8_t size; //Not currently in use. Might just remove
+} cache_line_queue_t;
+
+cache_line_node_t* search_for_block_in(cache_line_queue_t* queue, uint32_t tag){
+    // Search for the block in the queue
+    cache_line_node_t* current_node = queue->head;
+    while(current_node != NULL){
+        if(current_node->cache_line.tag == tag){ // We have a hit
+            return current_node;
+        }
+        current_node = current_node->next;
+    }
+    return NULL; // No hits implicates a miss
+}
+
+
+
+// Might not be ideal to have this as its own function, it assumes the block is in the queue
+void move_to_front(cache_line_queue_t* queue, cache_line_node_t* node){
+    // Stitch the nabouring nodes together
+    if(node == queue->head){ // In case the node was the head
+        return;
+    }
+    node->prev->next = node->next; // If we havent returned there has to be a prev.
+    if (node->next) {
+        node->next->prev = node->prev;
+    } else { // If there is no next, we were the tail.
+        queue->tail = node->prev;
+    }
+
+    // Place the node in front
+    push_front_of_queue(queue, node);
+    return;
+}
+void pop_back_of_queue(cache_line_queue_t* queue){
+    cache_line_node_t* last_node = queue->tail; // This is just to be able to free it later
+    queue->tail = last_node->prev;
+    queue->tail->next = NULL;
+    free(last_node);
+    return;
+}
+// Expects you to malloc a new node and put it into the queu
+void push_front_of_queue(cache_line_queue_t* queue, cache_line_node_t* node){
+    node->next = queue->head;
+    node->prev = NULL;
+    queue->head->prev = node;
+    queue->head = node;
+    return;
+}
+
+cache_line_queue_t* init_queue(){
+    cache_line_queue_t* new_queue = (cache_line_queue_t*)malloc(sizeof(cache_line_queue_t));
+    new_queue->head = NULL;
+    new_queue->tail = NULL;
+    new_queue->size = 0;
+
+    // Might as well just generate the nodes here.
+    for(int i=0; i < num_of_blocks; i++){
+        cache_line_node_t* new_line = (cache_line_node_t*)malloc(sizeof(cache_line_node_t));
+        new_line->cache_line.tag = 0;
+        new_line->cache_line.valid = 0;
+        new_line->next = NULL;
+        new_line->prev = NULL;
+        if(i == 0){
+            new_queue->head = new_line;
+            new_queue->tail = new_line;
+        } else {
+            push_front_of_queue(new_queue, new_line);
+        }
+    }
+
+    return new_queue;
+}
+void deallocate_queue(cache_line_queue_t* queue){
+    cache_line_node_t* current_node = queue->head;
+    while(current_node != NULL){
+        cache_line_node_t* next_node = current_node->next;
+        free(current_node);
+        current_node = next_node;
+    }
+    free(queue);
+    return;
+}
 /* Simulates an associative cache */
 void associative_sim(void){
     // The thing that differs from the direct mapped cache is that we
@@ -153,12 +267,54 @@ void associative_sim(void){
     // After a lot of reading it seems that a doubly linked list might be
     // what we want in this context. As you can stich the list together at any point quite
     // easely. Also it seems like fun things to try.
-    
+
     if(cache_org == sc){ // Split cache
 
     } else { //Unified cache
-        // cache_line_t* unified_cache_stack
+        cache_line_queue_t* cache_fifo_queue = init_queue();
+        // Open the trace file
+        FILE *trace_file;
+        trace_file = fopen("mem_trace2.txt", "r");
+        if(trace_file == NULL){
+            printf("Error opening trace file\n");
+            exit(1);
+        }
 
+        // Read trace file line by line, \n is the delimiter
+        char line[MAX_TRACE_FILE_LINE_LENGTH];
+        while(fgets(line, sizeof(line), trace_file)){
+            char accesstype[ACCESS_TYPE_LENGTH];
+            char    address[ADDRESS_LENGTH];
+            sscanf(line, "%s %s", accesstype, address);
+            uint32_t address_int = strtoul(address, NULL, 16); // 16 is the base
+
+            mem_access_t mem_access;
+            mem_access.address = address_int;
+            if(strcmp(accesstype, "I") == 0){
+                mem_access.accesstype = instruction;
+            } else {
+                mem_access.accesstype = data;
+            }
+
+            // Calculate the tag only because this is an associative cache
+            uint32_t tag = (address_int >> (num_of_bits_for_block_offset)) & ((1 << num_of_bits_for_tag) - 1);
+        
+            cache_stat.accesses++; // Updates the stats
+            // Check if it is a hit or miss
+            cache_line_node_t* hit_node = search_for_block_in(cache_fifo_queue, tag);
+            if(hit_node != NULL){ // The request is a hit
+                cache_stat.hits++; // Updates the stats
+                move_to_front(cache_fifo_queue, hit_node);
+            } else { // The request is a miss
+                pop_back_of_queue(cache_fifo_queue);
+                cache_line_node_t* new_node = (cache_line_node_t*)malloc(sizeof(cache_line_node_t));
+                new_node->cache_line.tag = tag;
+                new_node->cache_line.valid = 1;
+                push_front_of_queue(cache_fifo_queue, new_node);
+            }
+        }
+        fclose(trace_file);     // Close the trace file
+        deallocate_queue(cache_fifo_queue); // Free the memory
     }
 }
 
