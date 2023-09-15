@@ -28,8 +28,13 @@ typedef struct {
     uint32_t valid;
 } cache_line_t;
 
+cache_stat_t cache_stat;
+
 
 // DECLARE CACHES AND COUNTERS FOR THE STATS HERE
+#define MAX_TRACE_FILE_LINE_LENGTH 256
+#define ACCES_TYPE_LENGTH 2
+#define ADDRESS_LENGTH 8
 
 // Declaring constants here
 int block_size = 64;
@@ -100,6 +105,10 @@ int parse_arguments(int argc, char const *argv[]){
 
 /* Calculates all the needed params for the cache sim */
 void calculate_config(){
+    if(cache_org == sc){
+        // Split cache
+        cache_size = cache_size/2;
+    }
     num_of_blocks = cache_size/block_size;
     num_of_bits_for_block_offset = 6; // log_2(block_size) = 6 fixed at 64
     num_of_bits_for_index = log2(num_of_blocks);
@@ -122,6 +131,16 @@ void print_cache_config(){
         printf("-----------------------------\n");
     } else {
         printf("Cache organization: Split\n");
+        printf("Cache mapping:\t\t %s\n", cache_map == dm ? "Direct Mapped" : "Fully Associative");
+        // The split cache will always split equally between instruction and data
+        printf("Block size:\t\t %d / %d\n", block_size, block_size);
+        printf("Cache size:\t\t %d / %d\n", cache_size, cache_size);
+        printf("-----------------------------\n");
+        printf("Number of Blocks:\t\t %d / %d (%d/%d) \n", num_of_blocks, num_of_blocks, cache_size, block_size);
+        printf("Number of bits for block offset: %d / %d\n", num_of_bits_for_block_offset, num_of_bits_for_block_offset);
+        printf("Number of bits for the index:\t %d / %d\n", num_of_bits_for_index, num_of_bits_for_index);
+        printf("Number of bits for the tag:\t %d / %d\n", num_of_bits_for_tag, num_of_bits_for_tag);
+        printf("-----------------------------\n");
     }
 
 }
@@ -133,10 +152,80 @@ void associative_sim(void){
 
 /* Simulates a direct mapped cache */
 void direct_mapped_sim(void){
-    if(cache_org == sc){
-        //Logic for split cache
+    // Initialize the stats
 
-    } else {
+    if(cache_org == sc){ // Split cache
+        //Dynamically allocated array for the instructions
+        cache_line_t* instruction_cache = (cache_line_t*)malloc(num_of_blocks * sizeof(cache_line_t));
+        // Dynamically allocated array for the data
+        cache_line_t* data_cache        = (cache_line_t*)malloc(num_of_blocks * sizeof(cache_line_t));
+
+        if (instruction_cache == NULL || data_cache == NULL) { // Check if the memory was allocated
+            printf("Error allocating memory for cache\n");
+            exit(1);
+        }
+        // Initialize the caches
+        for(int index=0; index<num_of_blocks; index++){
+            instruction_cache[index].tag = 0;
+            instruction_cache[index].valid = 0;
+            data_cache[index].tag = 0;
+            data_cache[index].valid = 0;
+        }
+
+        // Feach each line in trace file,
+        FILE *trace_file;
+        trace_file = fopen("mem_trace2.txt", "r");
+        if(trace_file == NULL){
+            printf("Error opening trace file\n");
+            exit(1);
+        }
+        
+        char line[MAX_TRACE_FILE_LINE_LENGTH];
+        while(fgets(line, sizeof(line), trace_file)){
+            char accesstype[ACCES_TYPE_LENGTH];
+            char    address[ADDRESS_LENGTH];
+            sscanf(line, "%s %s", accesstype, address);
+
+            uint32_t address_int = strtoul(address, NULL, 16); // 16 is the base
+
+            mem_access_t mem_access;
+            mem_access.address = address_int;
+            if(strcmp(accesstype, "I") == 0){
+                mem_access.accesstype = instruction;
+            } else {
+                mem_access.accesstype = data;
+            }
+            
+            // Calculate the index and tag
+            uint32_t index = (address_int >> num_of_bits_for_block_offset) & ((1 << num_of_bits_for_index) - 1);
+            uint32_t tag = (address_int >> (num_of_bits_for_block_offset + num_of_bits_for_index)) & ((1 << num_of_bits_for_tag) - 1);
+
+            cache_stat.accesses++; // Updates the stats
+            // Check if it is a hit or miss
+            if(mem_access.accesstype == instruction){
+                if(instruction_cache[index].valid == 1 && instruction_cache[index].tag == tag){ // The request is a hit
+                    cache_stat.hits++; // Updates the stats
+                } else { // The request is a miss
+                    instruction_cache[index].valid = 1;
+                    instruction_cache[index].tag = tag;
+                }
+            } else {
+                if(data_cache[index].valid == 1 && data_cache[index].tag == tag){ // The request is a hit
+                    cache_stat.hits++; // Updates the stats
+                } else { // The request is a miss
+                    data_cache[index].valid = 1;
+                    data_cache[index].tag = tag;
+                }
+            }
+
+        }
+
+        fclose(trace_file);     // Close the trace file
+        free(instruction_cache);    // Free the memory
+        free(data_cache);           // Free the memory
+
+
+    } else { // Unified cache
         //Dynamically allocated array
         cache_line_t* unified_cache = (cache_line_t*)malloc(num_of_blocks * sizeof(cache_line_t));
         if (unified_cache == NULL) { // Check if the memory was allocated
@@ -145,7 +234,7 @@ void direct_mapped_sim(void){
         }
         // Initialize the cache
         for(int index=0; index<num_of_blocks; index++){
-            unified_cache[index].tag = 0;
+            unified_cache[index].tag = 0; // Stricly speaking this is neither needed or correct
             unified_cache[index].valid = 0;
         }
 
@@ -166,20 +255,22 @@ void direct_mapped_sim(void){
         }
 
         // Read trace file line by line, \n is the delimiter
-        char line[256];
+        char line[MAX_TRACE_FILE_LINE_LENGTH];
         while(fgets(line, sizeof(line), trace_file)){
-            // Parse the line
+            // Parse the line (Just realized that we could have used sscanf because the format is known)
+            // strtok is a function that splits a string into tokens based on a delimiter, in this case " "
+            // sscanf is a function that reads formatted input from a string and places the results into a buffer
             char *token;
             token = strtok(line, " ");
-            char *address = token;
-            token = strtok(NULL, " ");
             char *accesstype = token;
+            token = strtok(NULL, " ");
+            char *address = token;
 
-            printf("Address: %s\n", address);
-            printf("Access type: %s\n", accesstype);
+            //printf("Address: %s\n", address);
+            //printf("Access type: %s\n", accesstype);
 
             // Convert the address to a uint32_t
-            uint32_t address_int = (uint32_t)strtol(address, NULL, 16);
+            uint32_t address_int = strtoul(address, NULL, 16); // 16 is the base
 
             // Create a mem_access_t struct
             // This is not needed for a unified cache, but it will be
@@ -196,61 +287,62 @@ void direct_mapped_sim(void){
             uint32_t index = (address_int >> num_of_bits_for_block_offset) & ((1 << num_of_bits_for_index) - 1);
             uint32_t tag = (address_int >> (num_of_bits_for_block_offset + num_of_bits_for_index)) & ((1 << num_of_bits_for_tag) - 1);
 
+            cache_stat.accesses++; // Updates the stats
             // Check if it is a hit or miss
-            if(unified_cache[index].valid == 1 && unified_cache[index].tag == tag){
-                // It is a hit
-                // Update the stats
-                // Update the cache (not needed)
-                // printf("Hit\n");
-            } else {
-                // It is a miss
-                // Update the cache
+            if(unified_cache[index].valid == 1 && unified_cache[index].tag == tag){ // The request is a hit
+                cache_stat.hits++; // Updates the stats
+            } else { // The request is a miss
                 unified_cache[index].valid = 1;
                 unified_cache[index].tag = tag;
-                // prinf("Miss\n");
             }
         }
 
-        // Close the trace file
-        fclose(trace_file);
-        // Free the memory
-        free(unified_cache);
+        fclose(trace_file);     // Close the trace file
+        free(unified_cache);    // Free the memory
         
 
     }
     
 }
 
+/* Prints the cache stats */
+void print_cache_stats(void){
+    printf("######## Cache stats ########\n");
+    printf("Accesses:\t %llu\n", cache_stat.accesses);
+    printf("Hits:\t\t %llu\n", cache_stat.hits);
+    printf("Misses:\t\t %llu\n", cache_stat.accesses - cache_stat.hits);
+    printf("Hit rate:\t %f\n", (double)cache_stat.hits/cache_stat.accesses);
+    printf("Miss rate:\t %f\n", (double)(cache_stat.accesses - cache_stat.hits)/cache_stat.accesses);
+    printf("#############################\n");
+}
+
 int main(int argc, char const *argv[])
-{
+{   
     // Parse all the arguments.
     if(parse_arguments(argc, argv) == 1){
         return 1; // Returns with an error
     }
+
+    // Clear the terminal
+    system("clear");
+    printf("######## Cache sim ########\n");
 
     // Calculate the configuration
     calculate_config();
     // Print the configuration
     print_cache_config();
 
-    // Generate the valid address space
-    // Make a 2D array of all valid addresses
-    // Make a arrray that has size of the cache
-
-    // With a 32-bit addresses this means a memoy space of 4GB
-
-    // Approach:
-    // Make direct mapped cache first, and then afterwards make fully associative cache
-    // if the two have enough similarities, the can be combined
+    cache_stat.accesses = 0;
+    cache_stat.hits = 0;
 
     if(cache_map == dm){
         direct_mapped_sim();
     } else {
         associative_sim();
     }
+
+    print_cache_stats();
     
-
-
 
     return 0;
 }
