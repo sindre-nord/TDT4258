@@ -18,9 +18,6 @@ typedef struct {
 typedef struct {
     uint64_t accesses;
     uint64_t hits;
-    // You can declare additional statistics if
-    // you like, however you are now allowed to
-    // remove the accesses or hits
 } cache_stat_t;
 
 typedef struct {
@@ -147,7 +144,17 @@ void print_cache_config(){
 
 /* Simulates an associative cache */
 void associative_sim(void){
+    // The thing that differs from the direct mapped cache is that we
+    // dont use the index anymore to find a specific cache line but
+    // instead we seach the whole cache-FIFO-queue for a hit. The bottom of the
+    // FIFO is ejected on a miss and the requested block is placed on
+    // top (Although this is just one policy on how to handle this)
+    if(cache_org == sc){ // Split cache
 
+    } else { //Unified cache
+        // cache_line_t* unified_cache_stack
+
+    }
 }
 
 /* Simulates a direct mapped cache */
