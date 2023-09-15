@@ -216,6 +216,12 @@ void direct_mapped_sim(void){
                     data_cache[index].tag = tag;
                 }
             }
+            /* Perhaps one solution to combine the unified
+            and split cache methods would be to let the instruction
+            be used to choose an index that somehow relates to a
+            pointer. For the unified cache we just use the same pointer
+            for the two. This would make the code shorter, but 
+            is a bit misleading on what actually happens...*/
 
         }
 
@@ -248,7 +254,6 @@ void direct_mapped_sim(void){
         // Read trace file line by line, \n is the delimiter
         char line[MAX_TRACE_FILE_LINE_LENGTH];
         while(fgets(line, sizeof(line), trace_file)){
-
             char accesstype[ACCESS_TYPE_LENGTH];
             char    address[ADDRESS_LENGTH];
             sscanf(line, "%s %s", accesstype, address);
