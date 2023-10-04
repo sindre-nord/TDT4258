@@ -48,7 +48,7 @@ cache_stat_t cache_stat;
 #define ACCESS_TYPE_LENGTH 2
 #define ADDRESS_LENGTH 8
 
-#define TRACE_FILE_NAME "mem_trace.txt"
+#define TRACE_FILE_NAME "mem_trace2.txt"
 // #define TRACE_FILE_NAME "testcases/m100hit.txt"
 // Declaring constants here
 const int block_size = 64;
@@ -85,6 +85,7 @@ int parse_arguments(int argc, char const *argv[]){
     int correct_amount_of_arguments = 4;
     if(argc != correct_amount_of_arguments){
         printf("Invalid number of arguments. Usage: %s <cache_size> <cache_mapping> <cache_org>\n", argv[0]);
+        return 1;
     }
     // Parse the cache size
     cache_size = atoi(argv[1]); //Converts string to int
@@ -112,6 +113,7 @@ int parse_arguments(int argc, char const *argv[]){
         cache_org = sc;
     } else {
         printf("Invalid cache organization. Valid values are 'uc' or 'sc'\n");
+        return 1;
     }
 
     return 0;
@@ -529,8 +531,8 @@ void print_cache_stats(void){
     //Previously un-provided-now-provided-print-syntax...
     printf("\nCache Statistics\n");
     printf("-----------------\n\n");
-    printf("Accesses: %ld\n", cache_stat.accesses);
-    printf("Hits:     %ld\n", cache_stat.hits);
+    printf("Accesses: %llu\n", cache_stat.accesses);
+    printf("Hits:     %llu\n", cache_stat.hits);
     printf("Hit Rate: %.4f\n",
             (double)cache_stat.hits / cache_stat.accesses);
     }
@@ -538,7 +540,8 @@ void print_cache_stats(void){
 int main(int argc, char const *argv[])
 {   
     // Parse all the arguments.
-    if(parse_arguments(argc, argv) == 1){
+    if(parse_arguments(argc, argv)){
+        printf("Exiting...\n");
         return 1; // Returns with an error
     }
 
@@ -549,7 +552,7 @@ int main(int argc, char const *argv[])
     // Calculate the configuration
     calculate_config();
     // Print the configuration
-    print_cache_config();
+    // print_cache_config();
 
     cache_stat.accesses = 0;
     cache_stat.hits = 0;
