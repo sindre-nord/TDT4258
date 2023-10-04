@@ -48,6 +48,8 @@ cache_stat_t cache_stat;
 #define ACCESS_TYPE_LENGTH 2
 #define ADDRESS_LENGTH 8
 
+// #define TRACE_FILE_NAME "mem_trace2.txt"
+#define TRACE_FILE_NAME "testcases/m100hit.txt"
 // Declaring constants here
 const int block_size = 64;
 
@@ -270,12 +272,69 @@ void associative_sim(void){
     // easely. Also it seems like fun things to try.
 
     if(cache_org == sc){ // Split cache
+        cache_line_queue_t* instruction_cache_fifo_queue = init_queue();
+        cache_line_queue_t* data_cache_fifo_queue        = init_queue();
 
+        FILE *trace_file;
+        trace_file = fopen(TRACE_FILE_NAME, "r");
+        if(trace_file == NULL){
+            printf("Error opening trace file\n");
+            exit(1);
+        }
+
+        // Read trace file line by line, \n is the delimiter
+        char line[MAX_TRACE_FILE_LINE_LENGTH];
+        while(fgets(line, sizeof(line), trace_file)){
+            char accesstype[ACCESS_TYPE_LENGTH];
+            char    address[ADDRESS_LENGTH];
+            sscanf(line, "%s %s", accesstype, address);
+            uint32_t address_int = strtoul(address, NULL, 16); // 16 is the base
+
+            mem_access_t mem_access;
+            mem_access.address = address_int;
+            if(strcmp(accesstype, "I") == 0){
+                mem_access.accesstype = instruction;
+            } else {
+                mem_access.accesstype = data;
+            }
+
+            // Calculate the tag only because this is an associative cache
+            uint32_t tag = (address_int >> (num_of_bits_for_block_offset)) & ((1 << num_of_bits_for_tag) - 1);
+        
+            cache_stat.accesses++; // Updates the stats
+            // Check if it is a hit or miss
+            cache_line_node_t* hit_node;
+            if(mem_access.accesstype == instruction){
+                hit_node = search_for_block_in(instruction_cache_fifo_queue, tag);
+                if(hit_node != NULL){ // The request is a hit
+                    cache_stat.hits++; // Updates the stats
+                    move_to_front(instruction_cache_fifo_queue, hit_node);
+                } else { // The request is a miss
+                    pop_back_of_queue(instruction_cache_fifo_queue);
+                    cache_line_node_t* new_node = (cache_line_node_t*)malloc(sizeof(cache_line_node_t));
+                    new_node->cache_line.tag = tag;
+                    new_node->cache_line.valid = 1;
+                    push_front_of_queue(instruction_cache_fifo_queue, new_node);
+                }
+            } else {
+                hit_node = search_for_block_in(data_cache_fifo_queue, tag);
+                if(hit_node != NULL){ // The request is a hit
+                    cache_stat.hits++; // Updates the stats
+                    move_to_front(data_cache_fifo_queue, hit_node);
+                } else { // The request is a miss
+                    pop_back_of_queue(data_cache_fifo_queue);
+                    cache_line_node_t* new_node = (cache_line_node_t*)malloc(sizeof(cache_line_node_t));
+                    new_node->cache_line.tag = tag;
+                    new_node->cache_line.valid = 1;
+                    push_front_of_queue(data_cache_fifo_queue, new_node);
+                }
+            }
+        }
     } else { //Unified cache
         cache_line_queue_t* cache_fifo_queue = init_queue();
         // Open the trace file
         FILE *trace_file;
-        trace_file = fopen("mem_trace2.txt", "r");
+        trace_file = fopen(TRACE_FILE_NAME, "r");
         if(trace_file == NULL){
             printf("Error opening trace file\n");
             exit(1);
@@ -321,8 +380,6 @@ void associative_sim(void){
 
 /* Simulates a direct mapped cache */
 void direct_mapped_sim(void){
-    // Initialize the stats
-
     if(cache_org == sc){ // Split cache
         //Dynamically allocated array for the instructions
         cache_line_t* instruction_cache = (cache_line_t*)malloc(num_of_blocks * sizeof(cache_line_t));
@@ -343,7 +400,7 @@ void direct_mapped_sim(void){
 
         // Feach each line in trace file,
         FILE *trace_file;
-        trace_file = fopen("mem_trace2.txt", "r");
+        trace_file = fopen(TRACE_FILE_NAME, "r");
         if(trace_file == NULL){
             printf("Error opening trace file\n");
             exit(1);
@@ -414,7 +471,7 @@ void direct_mapped_sim(void){
 
         // Open the trace file
         FILE *trace_file;
-        trace_file = fopen("mem_trace2.txt", "r");
+        trace_file = fopen(TRACE_FILE_NAME, "r");
         if(trace_file == NULL){
             printf("Error opening trace file\n");
             exit(1);
@@ -461,14 +518,22 @@ void direct_mapped_sim(void){
 
 /* Prints the cache stats */
 void print_cache_stats(void){
-    printf("######## Cache stats ########\n");
-    printf("Accesses:\t %llu\n", cache_stat.accesses);
-    printf("Hits:\t\t %llu\n", cache_stat.hits);
-    printf("Misses:\t\t %llu\n", cache_stat.accesses - cache_stat.hits);
-    printf("Hit rate:\t %f\n", (double)cache_stat.hits/cache_stat.accesses);
-    printf("Miss rate:\t %f\n", (double)(cache_stat.accesses - cache_stat.hits)/cache_stat.accesses);
-    printf("#############################\n");
-}
+    // printf("######## Cache stats ########\n");
+    // printf("Accesses:\t %llu\n", cache_stat.accesses);
+    // printf("Hits:\t\t %llu\n", cache_stat.hits);
+    // printf("Misses:\t\t %llu\n", cache_stat.accesses - cache_stat.hits);
+    // printf("Hit rate:\t %f\n", (double)cache_stat.hits/cache_stat.accesses);
+    // printf("Miss rate:\t %f\n", (double)(cache_stat.accesses - cache_stat.hits)/cache_stat.accesses);
+    // printf("#############################\n");
+
+    //Previously un-provided-now-provided-print-syntax...
+    printf("\nCache Statistics\n");
+    printf("-----------------\n\n");
+    printf("Accesses: %ld\n", cache_stat.accesses);
+    printf("Hits:     %ld\n", cache_stat.hits);
+    printf("Hit Rate: %.4f\n",
+            (double)cache_stat.hits / cache_stat.accesses);
+    }
 
 int main(int argc, char const *argv[])
 {   
