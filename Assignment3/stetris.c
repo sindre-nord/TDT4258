@@ -169,13 +169,33 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
   if (!playfieldChanged){
     return;
   }
-  for(int i=0; i<64; i++){
+  // // For demo only
+  // for(int i=0; i<64; i++){
+  //   pixel pix;
+  //   pix.row = i / 8;
+  //   pix.col = i % 8;
+  //   pix.color.red = i*2;
+  //   pix.color.green = i*2;
+  //   pix.color.blue = i*3;
+  //   render_pixel(pix);
+  // }
+  // Render based on the game grid and blocks instead:
+  // 1. Clear the whole thing:
+  memset(fbdatamap, 0, fbdatasize);
+  // 2. Render the blocks:
+  for(int i=0; i<game.grid.x * game.grid.y; i++){
     pixel pix;
     pix.row = i / 8;
     pix.col = i % 8;
-    pix.color.red = i*2;
-    pix.color.green = i*2;
-    pix.color.blue = i*3;
+    pix.color.red = 0;
+    pix.color.green = 0;
+    pix.color.blue = 0;
+    if (game.rawPlayfield[i].occupied){
+      // Just some color atm...
+      pix.color.red = 42;
+      pix.color.green = 63;
+      pix.color.blue = 31;
+    }
     render_pixel(pix);
   }
 
