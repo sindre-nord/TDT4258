@@ -8,7 +8,13 @@
 #include <string.h>
 #include <time.h>
 #include <poll.h>
+
+
+#include <linux/fb.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h> // Needed for mmap
+
 
 
 // The game state can be used to detect what happens on the playfield
