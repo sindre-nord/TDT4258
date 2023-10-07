@@ -165,7 +165,9 @@ int main(){
     // Set the first LED to red:
     // The first LED is at position 0, 0
     // The first pixel is at position 0, 0
-    memset(fbdatamap, 0b1111100000000000, 2);
+    u_int16_t *pixel = (u_int16_t *)fbdatamap;
+    pixel[0] = 0b1111100000000000;
+    //memset(fbdatamap, 0b1111100000000000, 2);
 
     // Free the memory
     munmap(fbdatamap, fbdatasize);
