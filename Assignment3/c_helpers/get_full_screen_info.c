@@ -30,6 +30,6 @@ int main(int argc, char const *argv[]){
      
 
 
-    pclose(fb); // Compiler wants pclose() instead of close()
+    close(fb); // Compiler wants pclose() instead of close()
     return 0;
 }
