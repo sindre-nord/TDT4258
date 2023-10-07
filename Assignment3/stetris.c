@@ -12,7 +12,11 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h> // Needed for mmap
-
+#include <linux/fb.h>
+#include <limits.h> // Needed for PATH_MAX
+// Needed to fine the sense hat framebuffer
+#include <dirent.h>
+#include <fnmatch.h>
 
 
 // The game state can be used to detect what happens on the playfield
