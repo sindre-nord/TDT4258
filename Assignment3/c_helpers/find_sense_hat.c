@@ -3,6 +3,9 @@
 #include <linux/fb.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <string.h>
+
+#include <limits.h> // Needed for PATH_MAX
 
 // Needed to fine the sense hat framebuffer
 #include <dirent.h>
@@ -17,15 +20,14 @@
 int is_fb_sense_hat(int fb){
     // Check if the framebuffer is the sense hat framebuffer
     // Return 1 if it is
-    // Return 0 if it is not
-    // Return -1 if there is an error
+    // Return 0 if there is an error
     struct fb_fix_screeninfo finfo;
     if (ioctl(fb, FBIOGET_FSCREENINFO, &finfo)) {
         perror("Error reading fixed information");
         close(fb);
-        return -1;
+        return 0;
     }
-    if (finfo.id == SENSE_HAT_FB_ID){
+    if (!strcmp(finfo.id, SENSE_HAT_FB_ID)) {
         return 1;
     }
     return 0;
@@ -48,10 +50,12 @@ int find_frame_buffer_by_id(char *id){
 
     while ((entry = readdir(dir)) != NULL) {
         // printf("Found entry: %s\n", entry->d_name);
-        if (fnmatch(pattern, entry->d_name, 0) == 0) {
+        if (fnmatch(pattern, entry->d_name, 0) == 0) { // This is true if we have a match
             printf("Found framebuffer: %s\n", entry->d_name);
-            // This is a hit, check if it is the one we are looking for
-            int fb = open(entry->d_name, O_RDWR);
+            char full_path[PATH_MAX];
+            const char format[] = "%s/%s";
+            snprintf(full_path, sizeof(full_path), format, directory_path, entry->d_name);
+            int fb = open(full_path, O_RDWR);
             if (fb == -1) {
                 perror("Error opening framebuffer device");
                 closedir(dir);
@@ -61,6 +65,8 @@ int find_frame_buffer_by_id(char *id){
                 closedir(dir);
                 printf("Found sense hat framebuffer: %s\n", entry->d_name);
                 return fb;
+            } else {
+                close(fb);
             }
 
         }
