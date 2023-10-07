@@ -57,6 +57,7 @@ int find_frame_buffer_by_id(char *id){
             }
             if (is_fb_sense_hat(fb)){
                 closedir(dir);
+                printf("Found sense hat framebuffer: %s\n", entry->d_name);
                 return fb;
             }
 
