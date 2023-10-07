@@ -48,7 +48,7 @@ cache_stat_t cache_stat;
 #define ACCESS_TYPE_LENGTH 2
 #define ADDRESS_LENGTH 8
 
-#define TRACE_FILE_NAME "mem_trace2.txt"
+#define TRACE_FILE_NAME "mem_trace.txt"
 // #define TRACE_FILE_NAME "testcases/m100hit.txt"
 // Declaring constants here
 const int block_size = 64;
