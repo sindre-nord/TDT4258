@@ -159,7 +159,7 @@ int readSenseHatJoystick() {
 }
 
 void render_pixel(pixel pix){
-  pixel_grid[pix.row * 8 + pix.col] = (pix.red << 11) | (pix.green << 5) | pix.blue; // Bitmask my man
+  pixel_grid[pix.row * 8 + pix.col] = (pix.color.red << 11) | (pix.color.green << 5) | pix.color.blue; // Bitmask my man  
 }
 
 // This function should render the gamefield on the LED matrix. It is called
