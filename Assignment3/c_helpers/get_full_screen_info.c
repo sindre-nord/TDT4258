@@ -17,7 +17,13 @@ int main(int argc, char const *argv[]){
         close(fb);
         return 1;
     }
-    // Print all the information
+    struct fb_fix_screeninfo finfo;
+    if (ioctl(fb, FBIOGET_FSCREENINFO, &finfo)) {
+        perror("Error reading fixed information");
+        close(fb);
+        return 1;
+    }
+    // Print all the variable information
     printf("Screen resolution: %dx%d\n", vinfo.xres, vinfo.yres);
     printf("Virtual resolution: %dx%d\n", vinfo.xres_virtual, vinfo.yres_virtual);
     printf("Bits per pixel: %d\n", vinfo.bits_per_pixel);
@@ -27,7 +33,22 @@ int main(int argc, char const *argv[]){
     printf("Transp: offset %d, length %d, msb_right %d\n", vinfo.transp.offset, vinfo.transp.length, vinfo.transp.msb_right);
     // The rest of the info deos not seem to be useful ref: https://www.kernel.org/doc/html/latest/fb/api.html
      
-     
+    // Print the fixed information
+    printf("id: %s\n", finfo.id);
+    printf("smem_start: %lu\n", finfo.smem_start);
+    printf("smem_len: %d\n", finfo.smem_len);
+    printf("type: %d\n", finfo.type);
+    printf("type_aux: %d\n", finfo.type_aux);
+    printf("visual: %d\n", finfo.visual);
+    printf("xpanstep: %d\n", finfo.xpanstep);
+    printf("ypanstep: %d\n", finfo.ypanstep);
+    printf("ywrapstep: %d\n", finfo.ywrapstep);
+    printf("line_length: %d\n", finfo.line_length);
+    printf("mmio_start: %lu\n", finfo.mmio_start);
+    printf("mmio_len: %d\n", finfo.mmio_len);
+    printf("accel: %d\n", finfo.accel);
+    printf("capabilities: %d\n", finfo.capabilities);
+    
 
 
     close(fb); // Compiler wants pclose() instead of close()
