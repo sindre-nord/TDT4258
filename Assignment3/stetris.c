@@ -146,6 +146,8 @@ bool initializeSenseHat() {
 // This function is called when the application exits
 // Here you can free up everything that you might have opened/allocated
 void freeSenseHat() {
+  // Turn off all LEDs
+  memset(fbdatamap, 0, fbdatasize);
   munmap(fbdatamap, fbdatasize);
   close(fb);
 }
