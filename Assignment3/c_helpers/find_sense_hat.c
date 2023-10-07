@@ -47,8 +47,9 @@ int find_frame_buffer_by_id(char *id){
     }
 
     while ((entry = readdir(dir)) != NULL) {
-        printf("Found entry: %s\n", entry->d_name);
+        // printf("Found entry: %s\n", entry->d_name);
         if (fnmatch(pattern, entry->d_name, 0) == 0) {
+            printf("Found framebuffer: %s\n", entry->d_name);
             // This is a hit, check if it is the one we are looking for
             int fb = open(entry->d_name, O_RDWR);
             if (fb == -1) {
