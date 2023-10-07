@@ -4,6 +4,9 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <unistd.h> // Needed for close
+#include <sys/mman.h> // Needed for mmap
+
 
 #include <limits.h> // Needed for PATH_MAX
 
@@ -126,21 +129,25 @@ int main(){
     if (ioctl(fb, FBIOGET_VSCREENINFO, &vinfo)) {
         perror("Error reading variable information");
         close(fb);
-        return;
+        return 1;
     }
     struct fb_fix_screeninfo finfo;
     if (ioctl(fb, FBIOGET_FSCREENINFO, &finfo)) {
         perror("Error reading fixed information");
         close(fb);
-        return;
+        return 1;
     }
     // print_sense_hat_info(fb);
 
     // Map the data to memory, first calculate the size
     int fbdatasize = vinfo.xres * vinfo.yres * vinfo.bits_per_pixel / 8;
 
-    char *fbdatamap = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
-
+    char *fbdatamap = mmap(0, fbdatasize, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
+    if (fbdatamap == MAP_FAILED) {
+        perror("mmap failed");
+        close(fb);
+        return 1;
+    }
     // Turn on some of the LEDs on the sense hat:
     // The sense hat has 64 LEDs
     // Each LED has 3 colors: red, green, blue
