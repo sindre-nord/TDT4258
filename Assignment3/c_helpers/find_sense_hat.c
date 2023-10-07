@@ -70,13 +70,13 @@ void print_sense_hat_info(int fb){
     if (ioctl(fb, FBIOGET_VSCREENINFO, &vinfo)) {
         perror("Error reading variable information");
         close(fb);
-        return 1;
+        return;
     }
     struct fb_fix_screeninfo finfo;
     if (ioctl(fb, FBIOGET_FSCREENINFO, &finfo)) {
         perror("Error reading fixed information");
         close(fb);
-        return 1;
+        return;
     }
     // Print all the variable information
     printf("Screen resolution: %dx%d\n", vinfo.xres, vinfo.yres);
