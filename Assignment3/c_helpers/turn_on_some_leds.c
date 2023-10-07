@@ -167,6 +167,7 @@ int main(){
     // The first pixel is at position 0, 0
     u_int16_t *pixel = (u_int16_t *)fbdatamap;
     pixel[0] = 0b1111100000000000;
+    pixel[10] = 0b1111100000000000;
     //memset(fbdatamap, 0b1111100000000000, 2);
 
     // Free the memory
