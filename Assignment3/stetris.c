@@ -9,8 +9,6 @@
 #include <time.h>
 #include <poll.h>
 
-
-#include <linux/fb.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h> // Needed for mmap
@@ -81,7 +79,7 @@ gameConfig game = {
 };
 
 
-u_int16_t pixel_grid;
+u_int16_t *pixel_grid;
 char *fbdatamap;
 int fbdatasize;
 int fb;
