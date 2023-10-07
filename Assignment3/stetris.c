@@ -8,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include <poll.h>
+#include <sys/mman.h> // Needed for mmap
 
 
 // The game state can be used to detect what happens on the playfield
@@ -50,6 +51,21 @@ typedef struct {
 } gameConfig;
 
 
+typedef struct {
+  // 5 bits for red, 6 bits for green and 5 bits for blue
+  unsigned int red;
+  unsigned int green;
+  unsigned int blue;
+} color;
+
+typedef struct {
+  unsigned int col;
+  unsigned int row;
+  // Color is RGB with 5 bits for red, 6 bits for green and 5 bits for blue
+  color color;
+} pixel;
+
+
 
 gameConfig game = {
                    .grid = {8, 8},
@@ -59,6 +75,10 @@ gameConfig game = {
 };
 
 
+u_int16_t pixel_grid;
+char *fbdatamap;
+int fbdatasize;
+int fb;
 // This function is called on the start of your application
 // Here you can initialize what ever you need for your task
 // return false if something fails, else true
@@ -66,11 +86,51 @@ bool initializeSenseHat() {
   // There shoud be a fb0 in the /dev directory, which is the framebuffer
   // of the LED matrix. You can open it and write to it like a file.
 
-  FILE* fb = fopen("/dev/fb0", "w");
+  fb = open("/dev/fb1", O_RDWR);
   if (!fb) {
     return false;
   }
-  
+  struct fb_var_screeninfo vinfo;
+    if (ioctl(fb, FBIOGET_VSCREENINFO, &vinfo)) {
+        perror("Error reading variable information");
+        close(fb);
+        return 1;
+    }
+    struct fb_fix_screeninfo finfo;
+    if (ioctl(fb, FBIOGET_FSCREENINFO, &finfo)) {
+        perror("Error reading fixed information");
+        close(fb);
+        return 1;
+    }
+    // print_sense_hat_info(fb);
+
+    // Map the data to memory, first calculate the size
+    fbdatasize = vinfo.xres * vinfo.yres * vinfo.bits_per_pixel / 8;
+
+    fbdatamap = mmap(0, fbdatasize, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
+    if (fbdatamap == MAP_FAILED) {
+        perror("mmap failed");
+        close(fb);
+        return 1;
+    }
+    // Turn on some of the LEDs on the sense hat:
+    // The sense hat has 64 LEDs
+    // Each LED has 3 colors: red, green, blue
+    // Each color has 8 levels of brightness
+    // The color is set by writing to the framebuffer
+    // The framebuffer is a 2D array of pixels
+    // Each pixel is 16 bits
+    // The first 5 bits are for the red color
+    // The next 6 bits are for the green color
+    // The last 5 bits are for the blue color
+
+    // Clear the whole thing:
+    memset(fbdatamap, 0, fbdatasize);
+
+    // Set the first LED to red:
+    // The first LED is at position 0, 0
+    // The first pixel is at position 0, 0
+    pixel_grid = (u_int16_t *)fbdatamap;
 
   return true;
 }
@@ -78,7 +138,8 @@ bool initializeSenseHat() {
 // This function is called when the application exits
 // Here you can free up everything that you might have opened/allocated
 void freeSenseHat() {
-
+  munmap(fbdatamap, fbdatasize);
+  close(fb);
 }
 
 // This function should return the key that corresponds to the joystick press
@@ -89,12 +150,28 @@ int readSenseHatJoystick() {
   return 0;
 }
 
+void render_pixel(pixel pix){
+  pixel_grid[pix.row * 8 + pix.col] = (pix.red << 11) | (pix.green << 5) | pix.blue; // Bitmask my man
+}
 
 // This function should render the gamefield on the LED matrix. It is called
 // every game tick. The parameter playfieldChanged signals whether the game logic
 // has changed the playfield
 void renderSenseHatMatrix(bool const playfieldChanged) {
-  (void) playfieldChanged;
+  if (!playfieldChanged){
+    return;
+  }
+  for(int i=0; i<64; i++){
+    pixel pix;
+    pix.row = i / 8;
+    pix.col = i % 8;
+    pix.red = i*1;
+    pix.green = i*2;
+    pix.blue = i*3;
+    render_pixel(pix);
+  }
+
+  //(void) playfieldChanged;
 }
 
 
