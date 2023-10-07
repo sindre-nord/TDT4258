@@ -47,7 +47,7 @@ int find_frame_buffer_by_id(char *id){
     }
 
     while ((entry = readdir(dir)) != NULL) {
-        print("Found entry: %s\n", entry->d_name)
+        print("Found entry: %s\n", entry->d_name);
         if (fnmatch(pattern, entry->d_name, 0) == 0) {
             // This is a hit, check if it is the one we are looking for
             int fb = open(entry->d_name, O_RDWR);
