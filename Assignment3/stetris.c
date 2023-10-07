@@ -173,7 +173,7 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
     pixel pix;
     pix.row = i / 8;
     pix.col = i % 8;
-    pix.color.red = i*1;
+    pix.color.red = i*2;
     pix.color.green = i*2;
     pix.color.blue = i*3;
     render_pixel(pix);
