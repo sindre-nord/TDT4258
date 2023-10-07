@@ -39,9 +39,6 @@ int find_frame_buffer_by_id(char *id){
     struct dirent *entry;
     const char *directory_path = "/dev"; // default to /dev directory
     const char *pattern = "tty.*"; // The pattern to match
-    if (argc > 1) {
-        directory_path = argv[1];
-    }
 
     dir = opendir(directory_path);
     if (!dir) {

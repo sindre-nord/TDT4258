@@ -63,6 +63,15 @@ gameConfig game = {
 // Here you can initialize what ever you need for your task
 // return false if something fails, else true
 bool initializeSenseHat() {
+  // There shoud be a fb0 in the /dev directory, which is the framebuffer
+  // of the LED matrix. You can open it and write to it like a file.
+
+  FILE* fb = fopen("/dev/fb0", "w");
+  if (!fb) {
+    return false;
+  }
+  
+
   return true;
 }
 
