@@ -107,7 +107,7 @@ void print_sense_hat_info(int fb){
 }
 
 int main(){
-    printf("Attempting to find sense hat framebuffer...\n")
+    printf("Attempting to find sense hat framebuffer...\n");
     // Find the sense hat frambuffer
     int fb = find_frame_buffer_by_id(SENSE_HAT_FB_ID);
     if (fb == -1){
