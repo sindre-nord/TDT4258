@@ -38,7 +38,7 @@ int find_frame_buffer_by_id(char *id){
     DIR *dir;
     struct dirent *entry;
     const char *directory_path = "/dev"; // default to /dev directory
-    const char *pattern = "tty.*"; // The pattern to match
+    const char *pattern = "fb*"; // The pattern to match
 
     dir = opendir(directory_path);
     if (!dir) {
