@@ -426,10 +426,10 @@ int readKeyboard() {
  exit:
     switch (lkey) {
       case 10: return KEY_ENTER;
-      case 65: return KEY_UP;
-      case 66: return KEY_DOWN;
-      case 67: return KEY_RIGHT;
-      case 68: return KEY_LEFT;
+      // case 65: return KEY_UP;
+      // case 66: return KEY_DOWN;
+      // case 67: return KEY_RIGHT;
+      // case 68: return KEY_LEFT;
     }
   return 0;
 }
