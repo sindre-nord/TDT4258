@@ -83,18 +83,150 @@ gameConfig game = {
 };
 
 
+#define SENSE_HAT_JOYSTICK_ID "Raspberry Pi Sense HAT Joystick"
+int is_input_sense_hat_joystick(int local_joystick) {
+    // Check if the input device is the sense hat joystick
+    // Return 1 if it is
+    // Return 0 if there is an error or it's not the joystick
+    char name[256] = "unknown";
+    
+    // Using ioctl to get the name of the input device
+    // Input output control takes the file descriptor, the request, and a pointer to the data
+    // The Event Input Ouput Control Get Name request, the EVIOCGNAME macro, gets the name of the input device
+    if (ioctl(local_joystick, EVIOCGNAME(sizeof(name)), name) < 0) {
+        perror("Error reading input device name");
+        close(local_joystick);
+        return 0;
+    }
+
+    if (!strcmp(name, SENSE_HAT_JOYSTICK_ID)) {
+        return 1;
+    }
+
+    return 0;
+}
+
+int initializeJoystick(int *id) {
+  // Joystick will be on one of the /dev/input/event* files
+  DIR *dir;
+  struct dirent *entry;
+  char *joystick_pattern = "event*";
+  char *joystick_path = "/dev/input/";
+
+  dir = opendir(joystick_path);
+  if (!dir) {
+    perror("Unable to open directory");
+    return false;
+  }
+  while ((entry = readdir(dir)) != NULL){
+    if (fnmatch(joystick_pattern, entry->d_name, 0) == 0) {
+      printf("Found joystick: %s\n", entry->d_name);
+      char full_path[PATH_MAX];
+      const char format[] = "%s/%s";
+      snprintf(full_path, sizeof(full_path), format, joystick_path, entry->d_name);
+      int local_joystick = open(full_path, , O_RDONLY | O_NONBLOCK);
+      if (local_joystick == -1) {
+        perror("Error opening joystick device");
+        closedir(dir);
+        return false;
+      }
+      if (is_input_sense_hat_joystick(local_joystick)){
+        closedir(dir);
+        printf("Found sense hat joystick: %s\n", entry->d_name);
+        return local_joystick;
+      } else {
+        close(local_joystick);
+      }
+    }
+  }
+
+  return true;
+}
+
+#define SENSE_HAT_FB_ID "RPi-Sense FB"
+#define SENSE_HAT_FB_PATH "/dev"
+#define SENSE_HAT_FB_PATTERN "fb*"
 u_int16_t *pixel_grid;
 char *fbdatamap;
 int fbdatasize;
 int fb;
+int joystick;
+
+// Checks the id of the framebuffer to see if it is the sense hat framebuffer
+// returns 1 if it is, 0 if it is not
+int is_fb_sense_hat(int local_fb){
+    // Check if the framebuffer is the sense hat framebuffer
+    // Return 1 if it is
+    // Return 0 if there is an error
+    struct fb_fix_screeninfo finfo;
+    if (ioctl(local_fb, FBIOGET_FSCREENINFO, &finfo)) {
+        perror("Error reading fixed information");
+        close(local_fb);
+        return 0;
+    }
+    if (!strcmp(finfo.id, SENSE_HAT_FB_ID)) {
+        return 1;
+    }
+    return 0;
+}
+
+// Function returns an fb object on sucess and -1 on failure
+int find_frame_buffer_by_id(char *id){
+    // Sear for all framebuffers
+    // If id matches, return the file descriptor
+    // Else return -1
+    DIR *dir;
+    struct dirent *entry;
+    const char *directory_path = "/dev"; // default to /dev directory
+    const char *pattern = "fb*"; // The pattern to match
+
+    dir = opendir(directory_path);
+    if (!dir) {
+        perror("Unable to open directory");
+        return -1;
+    }
+
+    while ((entry = readdir(dir)) != NULL) {
+        // printf("Found entry: %s\n", entry->d_name);
+        if (fnmatch(pattern, entry->d_name, 0) == 0) { // This is true if we have a match
+            printf("Found framebuffer: %s\n", entry->d_name);
+            char full_path[PATH_MAX];
+            const char format[] = "%s/%s";
+            snprintf(full_path, sizeof(full_path), format, directory_path, entry->d_name);
+            int local_fb = open(full_path, O_RDWR);
+            if (local_fb == -1) {
+                perror("Error opening framebuffer device");
+                closedir(dir);
+                return -1;
+            }
+            if (is_fb_sense_hat(local_fb)){
+                closedir(dir);
+                printf("Found sense hat framebuffer: %s\n", entry->d_name);
+                return local_fb;
+            } else {
+                close(local_fb);
+            }
+
+        }
+    }
+    closedir(dir);
+    return -1;
+}
 // This function is called on the start of your application
 // Here you can initialize what ever you need for your task
 // return false if something fails, else true
 bool initializeSenseHat() {
+  // Initialize the joystick
+  joystick = initializeJoystick();
+  if (!joystickInitialized){
+    return false;
+  }
+
+
   // There shoud be a fb0 in the /dev directory, which is the framebuffer
   // of the LED matrix. You can open it and write to it like a file.
 
-  fb = open("/dev/fb1", O_RDWR);
+  fb = find_frame_buffer_by_id(SENSE_HAT_FB_ID)
   if (!fb) {
     return false;
   }
@@ -157,6 +289,18 @@ void freeSenseHat() {
 // and KEY_ENTER, when the the joystick is pressed
 // !!! when nothing was pressed you MUST return 0 !!!
 int readSenseHatJoystick() {
+  // Joystick 
+  struct input_event ev;
+  ssize_t n = read(joystick, &ev, sizeof(ev));
+
+  if (n == (ssize_t)sizeof(ev)) {
+      if (ev.type == EV_KEY && ev.value == 1) {
+        if (ev.code == KEY_UP || ev.code == KEY_DOWN || ev.code == KEY_LEFT || 
+            ev.code == KEY_RIGHT || ev.code == KEY_ENTER) {
+            return ev.code;
+        }
+      }
+  }
   return 0;
 }
 
