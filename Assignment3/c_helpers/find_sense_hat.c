@@ -34,7 +34,7 @@ int is_fb_sense_hat(int fb){
 }
 
 int find_frame_buffer_by_id(char *id){
-    // Sear for all framebuffers
+    // Search for all framebuffers
     // If id matches, return the file descriptor
     // Else return -1
     DIR *dir;
