@@ -297,6 +297,7 @@ int readSenseHatJoystick() {
       if (ev.type == EV_KEY && ev.value == 1) {
         if (ev.code == KEY_UP || ev.code == KEY_DOWN || ev.code == KEY_LEFT || 
             ev.code == KEY_RIGHT || ev.code == KEY_ENTER) {
+            printf("Joystick pressed: %d\n", ev.code")
             return ev.code;
         }
       }
