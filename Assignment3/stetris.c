@@ -93,6 +93,7 @@ int is_input_sense_hat_joystick(int local_joystick) {
     // Using ioctl to get the name of the input device
     // Input output control takes the file descriptor, the request, and a pointer to the data
     // The Event Input Ouput Control Get Name request, the EVIOCGNAME macro, gets the name of the input device
+    // https://www.linuxjournal.com/article/6429
     if (ioctl(local_joystick, EVIOCGNAME(sizeof(name)), name) < 0) {
         perror("Error reading input device name");
         close(local_joystick);
