@@ -289,7 +289,7 @@ bool initializeSenseHat() {
     // The first pixel is at position 0, 0
     pixel_grid = (u_int16_t *)fbdatamap; 
 
-    color_array = (pixel *)malloc(sizeof(pixel) * vinfo.xres * vinfo.yres);
+    color_array = (color *)malloc(sizeof(color) * vinfo.xres * vinfo.yres);
 
     
 
