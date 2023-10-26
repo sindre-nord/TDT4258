@@ -73,6 +73,21 @@ typedef struct {
   color color;
 } pixel;
 
+// As requested, a range of somewhat distinct colors
+color colors[10] = {
+    {31, 0, 0},        // Red
+    {0, 63, 0},        // Green
+    {0, 0, 31},        // Blue
+    {31, 63, 0},       // Yellow
+    {31, 0, 31},       // Magenta
+    {0, 63, 31},       // Cyan
+    {31, 63, 31},      // White
+    {31, 31, 0},       // Orange
+    {31, 15, 31},      // Purple
+    {0, 31, 0}         // Dark Green
+};
+int colorItterator = 0;
+
 
 
 gameConfig game = {
@@ -147,7 +162,8 @@ int initializeJoystick() {
 #define SENSE_HAT_FB_ID "RPi-Sense FB"
 #define SENSE_HAT_FB_PATH "/dev"
 #define SENSE_HAT_FB_PATTERN "fb*"
-u_int16_t *pixel_grid;
+u_int16_t *pixel_grid; // Maps to the memory
+pixel *color_array; // Keeps the colors at the same locations,
 char *fbdatamap;
 int fbdatasize;
 int fb;
@@ -271,7 +287,11 @@ bool initializeSenseHat() {
     // Set the first LED to red:
     // The first LED is at position 0, 0
     // The first pixel is at position 0, 0
-    pixel_grid = (u_int16_t *)fbdatamap;
+    pixel_grid = (u_int16_t *)fbdatamap; 
+
+    color_array = (pixel *)malloc(sizeof(pixel) * vinfo.xres * vinfo.yres);
+
+    
 
   return true;
 }
@@ -332,19 +352,11 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
   memset(fbdatamap, 0, fbdatasize);
   // 2. Render the blocks:
   for(int i=0; i<game.grid.x * game.grid.y; i++){
-    pixel pix;
-    pix.row = i / 8;
-    pix.col = i % 8;
-    pix.color.red = 0;
-    pix.color.green = 0;
-    pix.color.blue = 0;
-    if (game.rawPlayfield[i].occupied){
-      // Just some color atm...
-      pix.color.red = 42;
-      pix.color.green = 63;
-      pix.color.blue = 31;
-    }
+    // Get the pixel from the color array
+    pixel pix = color_array[i];
+    // Render the pixel
     render_pixel(pix);
+    
   }
 
   //(void) playfieldChanged;
@@ -357,6 +369,16 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
 
 static inline void newTile(coord const target) {
   game.playfield[target.y][target.x].occupied = true;
+  // Color the same tile in the color grid
+  pixel pix;
+  pix.row = target.y;
+  pix.col = target.x;
+  pix.color = colors[colorItterator];
+  colorItterator++;
+  if(colorItterator > 9){
+    colorItterator = 0;
+  }
+  color_array[target.y * game.grid.x + target.x] = pix.color;
 }
 
 static inline void copyTile(coord const to, coord const from) {
@@ -416,6 +438,14 @@ bool moveRight() {
     copyTile(newTile, game.activeTile);
     resetTile(game.activeTile);
     game.activeTile = newTile;
+    // Move the color as well
+    pixel pix;
+    pix.row = newTile.y;
+    pix.col = newTile.x;
+    pix.color = color_array[game.activeTile.y * game.grid.x + game.activeTile.x];
+    color_array[game.activeTile.y * game.grid.x + game.activeTile.x] = (color){0, 0, 0};
+
+
     return true;
   }
   return false;
@@ -427,6 +457,13 @@ bool moveLeft() {
     copyTile(newTile, game.activeTile);
     resetTile(game.activeTile);
     game.activeTile = newTile;
+    // Move the color as well
+    pixel pix;
+    pix.row = newTile.y;
+    pix.col = newTile.x;
+    pix.color = color_array[game.activeTile.y * game.grid.x + game.activeTile.x];
+    color_array[game.activeTile.y * game.grid.x + game.activeTile.x] = (color){0, 0, 0};
+
     return true;
   }
   return false;
@@ -439,6 +476,13 @@ bool moveDown() {
     copyTile(newTile, game.activeTile);
     resetTile(game.activeTile);
     game.activeTile = newTile;
+    // Move the color as well
+    pixel pix;
+    pix.row = newTile.y;
+    pix.col = newTile.x;
+    pix.color = color_array[game.activeTile.y * game.grid.x + game.activeTile.x];
+    color_array[game.activeTile.y * game.grid.x + game.activeTile.x] = (color){0, 0, 0};
+
     return true;
   }
   return false;
@@ -451,6 +495,16 @@ bool clearRow() {
       copyRow(y, y - 1);
     }
     resetRow(0);
+    // Move the colors as well
+    for (unsigned int y = game.grid.y - 1; y > 0; y--) {
+      for (unsigned int x = 0; x < game.grid.x; x++) {
+        color_array[y * game.grid.x + x] = color_array[(y - 1) * game.grid.x + x];
+      }
+    }
+    for (unsigned int x = 0; x < game.grid.x; x++) {
+      color_array[x] = (color){0, 0, 0};
+    }
+
     return true;
   }
   return false;
