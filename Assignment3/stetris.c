@@ -554,6 +554,7 @@ bool sTetris(int const key) {
 }
 
 int readKeyboard() {
+  return 0;
   struct pollfd pollStdin = {
        .fd = STDIN_FILENO,
        .events = POLLIN
