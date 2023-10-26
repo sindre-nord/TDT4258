@@ -147,11 +147,25 @@ int initializeJoystick() {
 #define SENSE_HAT_FB_ID "RPi-Sense FB"
 #define SENSE_HAT_FB_PATH "/dev"
 #define SENSE_HAT_FB_PATTERN "fb*"
-u_int16_t *pixel_grid;
+u_int16_t *pixel_grid; // Maps to memory
+color *color_grid; // Keeps dem colors
 char *fbdatamap;
 int fbdatasize;
 int fb;
 int joystick;
+
+color colors[7] = {
+    {0, 63, 31},     // Cyan
+    {31, 63, 0},     // Yellow
+    {31, 15, 31},    // Purple
+    {0, 63, 0},      // Green
+    {31, 0, 0},      // Red
+    {0, 0, 31},      // Blue
+    {31, 31, 0}      // Orange
+};
+int color_iterator = 0;
+
+
 
 // Checks the id of the framebuffer to see if it is the sense hat framebuffer
 // returns 1 if it is, 0 if it is not
@@ -272,6 +286,7 @@ bool initializeSenseHat() {
     // The first LED is at position 0, 0
     // The first pixel is at position 0, 0
     pixel_grid = (u_int16_t *)fbdatamap;
+    color_grid = (color *)malloc(sizeof(color) * vinfo.xres * vinfo.yres);
 
   return true;
 }
@@ -282,6 +297,8 @@ void freeSenseHat() {
   // Turn off all LEDs
   memset(fbdatamap, 0, fbdatasize);
   munmap(fbdatamap, fbdatasize);
+  // Release the color grid
+  free(color_grid);
   close(fb);
 }
 
@@ -335,15 +352,7 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
     pixel pix;
     pix.row = i / 8;
     pix.col = i % 8;
-    pix.color.red = 0;
-    pix.color.green = 0;
-    pix.color.blue = 0;
-    if (game.rawPlayfield[i].occupied){
-      // Just some color atm...
-      pix.color.red = 42;
-      pix.color.green = 63;
-      pix.color.blue = 31;
-    }
+    pix.color = color_grid[i];
     render_pixel(pix);
   }
 
@@ -357,6 +366,12 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
 
 static inline void newTile(coord const target) {
   game.playfield[target.y][target.x].occupied = true;
+  // Also make give a color to the new tile
+  color_grid[target.y * game.grid.x + target.x] = colors[color_iterator];
+  color_iterator++;
+  if (color_iterator > 6){
+    color_iterator = 0;
+  }
 }
 
 static inline void copyTile(coord const to, coord const from) {
