@@ -107,7 +107,7 @@ int is_input_sense_hat_joystick(int local_joystick) {
     return 0;
 }
 
-int initializeJoystick(int *id) {
+int initializeJoystick() {
   // Joystick will be on one of the /dev/input/event* files
   DIR *dir;
   struct dirent *entry;
@@ -125,7 +125,7 @@ int initializeJoystick(int *id) {
       char full_path[PATH_MAX];
       const char format[] = "%s/%s";
       snprintf(full_path, sizeof(full_path), format, joystick_path, entry->d_name);
-      int local_joystick = open(full_path, , O_RDONLY | O_NONBLOCK);
+      int local_joystick = open(full_path, O_RDONLY | O_NONBLOCK);
       if (local_joystick == -1) {
         perror("Error opening joystick device");
         closedir(dir);
@@ -227,7 +227,7 @@ bool initializeSenseHat() {
   // There shoud be a fb0 in the /dev directory, which is the framebuffer
   // of the LED matrix. You can open it and write to it like a file.
 
-  fb = find_frame_buffer_by_id(SENSE_HAT_FB_ID)
+  fb = find_frame_buffer_by_id(SENSE_HAT_FB_ID);
   if (!fb) {
     return false;
   }
