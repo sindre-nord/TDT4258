@@ -163,7 +163,7 @@ int initializeJoystick() {
 #define SENSE_HAT_FB_PATH "/dev"
 #define SENSE_HAT_FB_PATTERN "fb*"
 u_int16_t *pixel_grid; // Maps to the memory
-pixel *color_array; // Keeps the colors at the same locations,
+color *color_array; // Keeps the colors at the same locations,
 char *fbdatamap;
 int fbdatasize;
 int fb;
@@ -356,7 +356,7 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
     pixel pix = color_array[i];
     // Render the pixel
     render_pixel(pix);
-    
+
   }
 
   //(void) playfieldChanged;
