@@ -367,12 +367,6 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
 
 static inline void newTile(coord const target) {
   game.playfield[target.y][target.x].occupied = true;
-  // Also make give a color to the new tile
-  color_grid[target.y * game.grid.x + target.x] = colors[color_iterator];
-  color_iterator++;
-  if (color_iterator > 6){
-    color_iterator = 0;
-  }
 }
 
 static inline void copyTile(coord const to, coord const from) {
@@ -423,6 +417,12 @@ bool addNewTile() {
   if (tileOccupied(game.activeTile))
     return false;
   newTile(game.activeTile);
+  // Also make give a color to the new tile
+  color_grid[game.activeTile.y * game.grid.x + game.activeTile.x] = colors[color_iterator];
+  color_iterator++;
+  if (color_iterator >= 7){
+    color_iterator = 0;
+  }
   return true;
 }
 
@@ -432,6 +432,9 @@ bool moveRight() {
     copyTile(newTile, game.activeTile);
     resetTile(game.activeTile);
     game.activeTile = newTile;
+    // Also move the color
+    color_grid[game.activeTile.y * game.grid.x + game.activeTile.x] = color_grid[(game.activeTile.y) * game.grid.x + (game.activeTile.x - 1)];
+    color_grid[(game.activeTile.y) * game.grid.x + (game.activeTile.x - 1)] = (color){0, 0, 0};
     return true;
   }
   return false;
@@ -443,6 +446,10 @@ bool moveLeft() {
     copyTile(newTile, game.activeTile);
     resetTile(game.activeTile);
     game.activeTile = newTile;
+    // Also move the color
+    color_grid[game.activeTile.y * game.grid.x + game.activeTile.x] = color_grid[(game.activeTile.y) * game.grid.x + (game.activeTile.x + 1)];
+    color_grid[(game.activeTile.y) * game.grid.x + (game.activeTile.x + 1)] = (color){0, 0, 0};
+
     return true;
   }
   return false;
@@ -455,6 +462,10 @@ bool moveDown() {
     copyTile(newTile, game.activeTile);
     resetTile(game.activeTile);
     game.activeTile = newTile;
+    // Also move the color
+    color_grid[game.activeTile.y * game.grid.x + game.activeTile.x] = color_grid[(game.activeTile.y - 1) * game.grid.x + (game.activeTile.x)];
+    color_grid[(game.activeTile.y - 1) * game.grid.x + (game.activeTile.x)] = (color){0, 0, 0};
+  
     return true;
   }
   return false;
@@ -467,6 +478,14 @@ bool clearRow() {
       copyRow(y, y - 1);
     }
     resetRow(0);
+    // Also move the colors
+    for (unsigned int y = game.grid.y - 1; y > 0; y--) {
+      for (unsigned int x = 0; x < game.grid.x; x++) {
+        color_grid[y * game.grid.x + x] = color_grid[(y - 1) * game.grid.x + x];
+        color_grid[(y - 1) * game.grid.x + x] = (color){0, 0, 0};
+      }
+    }
+    
     return true;
   }
   return false;
