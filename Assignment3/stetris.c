@@ -353,7 +353,8 @@ void renderSenseHatMatrix(bool const playfieldChanged) {
   // 2. Render the blocks:
   for(int i=0; i<game.grid.x * game.grid.y; i++){
     // Get the pixel from the color array
-    pixel pix.color = color_array[i];
+    pixel pix;
+    pix.color = color_array[i];
     pix.row = i / 8;
     pix.col = i % 8;
     // Render the pixel
