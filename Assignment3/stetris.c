@@ -219,7 +219,7 @@ int find_frame_buffer_by_id(char *id){
 bool initializeSenseHat() {
   // Initialize the joystick
   joystick = initializeJoystick();
-  if (!joystickInitialized){
+  if (!joystick){
     return false;
   }
 
