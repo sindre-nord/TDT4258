@@ -227,7 +227,7 @@ bool initializeSenseHat() {
   // There shoud be a fb0 in the /dev directory, which is the framebuffer
   // of the LED matrix. You can open it and write to it like a file.
 
-  fb = find_frame_buffer_by_id(SENSE_HAT_FB_ID)
+  fb = find_frame_buffer_by_id(SENSE_HAT_FB_ID);
   if (!fb) {
     return false;
   }
