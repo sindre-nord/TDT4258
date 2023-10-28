@@ -515,6 +515,8 @@ void newGame() {
   game.tick = 0;
   game.level = 0;
   resetPlayfield();
+  // Clear the sense hat matrix
+  memset(fbdatamap, 0, fbdatasize);
 }
 
 void gameOver() {
@@ -571,8 +573,6 @@ bool sTetris(int const key) {
           game.tiles++;
         } else {
           gameOver();
-          // Clear the sense hat matrix
-          memset(fbdatamap, 0, fbdatasize);
         }
       }
     }
