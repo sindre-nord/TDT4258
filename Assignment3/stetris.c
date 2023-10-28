@@ -314,7 +314,7 @@ int readSenseHatJoystick() {
        .fd = joystick, // File descriptor
        .events = POLLIN // Requested event
   };
-  int pollingTimeout = 200; // Timeout in ms
+  int pollingTimeout = 10; // Timeout in ms
 
   // Perform an evaluate the actual poll
   int pollingResult = poll(&pollJoystick, 1, pollingTimeout);
