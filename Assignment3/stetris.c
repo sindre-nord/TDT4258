@@ -310,43 +310,68 @@ void freeSenseHat() {
 // and KEY_ENTER, when the the joystick is pressed
 // !!! when nothing was pressed you MUST return 0 !!!
 int readSenseHatJoystick() {
+  // struct pollfd pollJoystick = {
+  //      .fd = joystick, // File descriptor
+  //      .events = POLLIN // Requested event
+  // };
+  // int pollingTimeout = 10; // Timeout in ms
+
+  // // Perform an evaluate the actual poll
+  // int pollingResult = poll(&pollJoystick, 1, pollingTimeout);
+  // // Check the result
+  // if (pollingResult == -1) {
+  //     // This is bad, but im not supposed to alter behavior so who knows how to deal with
+  //     // errors...
+  //     return 0;
+  // }
+  // if (pollingResult == 0) {
+  //     return 0;
+  // }
+  // if (!(pollJoystick.revents & POLLIN)) {
+  //     // This not happening means we gucci.
+  //     return 0;
+  // }
+
+
+  // // Joystick 
+  // struct input_event ev;
+  // ssize_t n = read(joystick, &ev, sizeof(ev));
+
+  // if (n == (ssize_t)sizeof(ev)) {
+  //     if (ev.type == EV_KEY && ev.value == 1) {
+  //       if (ev.code == KEY_UP || ev.code == KEY_DOWN || ev.code == KEY_LEFT || 
+  //           ev.code == KEY_RIGHT || ev.code == KEY_ENTER) {
+  //           //printf("Joystick pressed: %d\n", ev.code);
+  //           return ev.code;
+  //       }
+  //     }
+  // }
+  // return 0;
   struct pollfd pollJoystick = {
-       .fd = joystick, // File descriptor
-       .events = POLLIN // Requested event
+      .fd = joystick,  // File descriptor
+      .events = POLLIN // Requested event
   };
-  int pollingTimeout = 10; // Timeout in ms
 
-  // Perform an evaluate the actual poll
-  int pollingResult = poll(&pollJoystick, 1, pollingTimeout);
-  // Check the result
-  if (pollingResult == -1) {
-      // This is bad, but im not supposed to alter behavior so who knows how to deal with
-      // errors...
-      return 0;
-  }
-  if (pollingResult == 0) {
-      return 0;
-  }
-  if (!(pollJoystick.revents & POLLIN)) {
-      // This not happening means we gucci.
-      return 0;
-  }
+  int lkey = 0; // Use same method as handout
 
+  if (poll(&pollJoystick, 1, 0)) { // 0 timeout for non-blocking
+      struct input_event ev;
+      ssize_t n = read(joystick, &ev, sizeof(ev));
 
-  // Joystick 
-  struct input_event ev;
-  ssize_t n = read(joystick, &ev, sizeof(ev));
-
-  if (n == (ssize_t)sizeof(ev)) {
-      if (ev.type == EV_KEY && ev.value == 1) {
-        if (ev.code == KEY_UP || ev.code == KEY_DOWN || ev.code == KEY_LEFT || 
-            ev.code == KEY_RIGHT || ev.code == KEY_ENTER) {
-            //printf("Joystick pressed: %d\n", ev.code);
-            return ev.code;
-        }
+      if (n == (ssize_t)sizeof(ev) && ev.type == EV_KEY && ev.value == 1) {
+          lkey = ev.code;
       }
   }
-  return 0;
+
+  // Process the read value
+  switch (lkey) {
+      case KEY_UP: return KEY_UP;
+      case KEY_DOWN: return KEY_DOWN;
+      case KEY_LEFT: return KEY_LEFT;
+      case KEY_RIGHT: return KEY_RIGHT;
+      case KEY_ENTER: return KEY_ENTER;
+      default: return 0;
+  }
 }
 
 void render_pixel(pixel pix){
