@@ -516,7 +516,7 @@ void newGame() {
   game.level = 0;
   resetPlayfield();
   // Clear the sense hat matrix
-  memset(fbdatamap, 0, fbdatasize);
+  memset(pixel_grid, 0, sizeof(u_int16_t) * 64);
 }
 
 void gameOver() {
