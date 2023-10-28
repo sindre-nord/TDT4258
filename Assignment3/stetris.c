@@ -95,7 +95,7 @@ int is_input_sense_hat_joystick(int local_joystick) {
     // The Event Input Ouput Control Get Name request, the EVIOCGNAME macro, gets the name of the input device
     // https://www.linuxjournal.com/article/6429
     if (ioctl(local_joystick, EVIOCGNAME(sizeof(name)), name) < 0) {
-        perror("Error reading input device name");
+        //perror("Error reading input device name"); // Can decide if throwing an error is allowed according to the spec
         close(local_joystick);
         return 0;
     }
@@ -116,7 +116,7 @@ int initializeJoystick() {
 
   dir = opendir(joystick_path);
   if (!dir) {
-    perror("Unable to open directory");
+    // perror("Unable to open directory"); // Can decide if throwing an error is allowed according to the spec
     return false;
   }
   while ((entry = readdir(dir)) != NULL){
@@ -127,7 +127,7 @@ int initializeJoystick() {
       snprintf(full_path, sizeof(full_path), format, joystick_path, entry->d_name);
       int local_joystick = open(full_path, O_RDONLY); // | O_NONBLOCK);
       if (local_joystick == -1) {
-        perror("Error opening joystick device");
+        // perror("Error opening joystick device"); // Can decide if throwing an error is allowed according to the spec
         closedir(dir);
         return false;
       }
@@ -175,7 +175,7 @@ int is_fb_sense_hat(int local_fb){
     // Return 0 if there is an error
     struct fb_fix_screeninfo finfo;
     if (ioctl(local_fb, FBIOGET_FSCREENINFO, &finfo)) {
-        perror("Error reading fixed information");
+        // perror("Error reading fixed information"); // Can decide if throwing an error is allowed according to the spec
         close(local_fb);
         return 0;
     }
@@ -197,7 +197,7 @@ int find_frame_buffer_by_id(char *id){
 
     dir = opendir(directory_path);
     if (!dir) {
-        perror("Unable to open directory");
+        // perror("Unable to open directory"); // Can decide if throwing an error is allowed according to the spec
         return -1;
     }
 
@@ -210,7 +210,7 @@ int find_frame_buffer_by_id(char *id){
             snprintf(full_path, sizeof(full_path), format, directory_path, entry->d_name);
             int local_fb = open(full_path, O_RDWR);
             if (local_fb == -1) {
-                perror("Error opening framebuffer device");
+                // perror("Error opening framebuffer device"); // Can decide if throwing an error is allowed according to the spec
                 closedir(dir);
                 return -1;
             }
@@ -247,13 +247,13 @@ bool initializeSenseHat() {
   }
   struct fb_var_screeninfo vinfo;
     if (ioctl(fb, FBIOGET_VSCREENINFO, &vinfo)) {
-        perror("Error reading variable information");
+        // perror("Error reading variable information"); // Can decide if throwing an error is allowed according to the spec
         close(fb);
         return 1;
     }
     struct fb_fix_screeninfo finfo;
     if (ioctl(fb, FBIOGET_FSCREENINFO, &finfo)) {
-        perror("Error reading fixed information");
+        // perror("Error reading fixed information"); // Can decide if throwing an error is allowed according to the spec
         close(fb);
         return 1;
     }
@@ -264,7 +264,7 @@ bool initializeSenseHat() {
 
     fbdatamap = mmap(0, fbdatasize, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
     if (fbdatamap == MAP_FAILED) {
-        perror("mmap failed");
+        // perror("mmap failed"); // Can decide if throwing an error is allowed according to the spec
         close(fb);
         return 1;
     }
@@ -310,43 +310,6 @@ void freeSenseHat() {
 // and KEY_ENTER, when the the joystick is pressed
 // !!! when nothing was pressed you MUST return 0 !!!
 int readSenseHatJoystick() {
-  // struct pollfd pollJoystick = {
-  //      .fd = joystick, // File descriptor
-  //      .events = POLLIN // Requested event
-  // };
-  // int pollingTimeout = 10; // Timeout in ms
-
-  // // Perform an evaluate the actual poll
-  // int pollingResult = poll(&pollJoystick, 1, pollingTimeout);
-  // // Check the result
-  // if (pollingResult == -1) {
-  //     // This is bad, but im not supposed to alter behavior so who knows how to deal with
-  //     // errors...
-  //     return 0;
-  // }
-  // if (pollingResult == 0) {
-  //     return 0;
-  // }
-  // if (!(pollJoystick.revents & POLLIN)) {
-  //     // This not happening means we gucci.
-  //     return 0;
-  // }
-
-
-  // // Joystick 
-  // struct input_event ev;
-  // ssize_t n = read(joystick, &ev, sizeof(ev));
-
-  // if (n == (ssize_t)sizeof(ev)) {
-  //     if (ev.type == EV_KEY && ev.value == 1) {
-  //       if (ev.code == KEY_UP || ev.code == KEY_DOWN || ev.code == KEY_LEFT || 
-  //           ev.code == KEY_RIGHT || ev.code == KEY_ENTER) {
-  //           //printf("Joystick pressed: %d\n", ev.code);
-  //           return ev.code;
-  //       }
-  //     }
-  // }
-  // return 0;
   struct pollfd pollJoystick = {
       .fd = joystick,  // File descriptor
       .events = POLLIN // Requested event
@@ -354,7 +317,7 @@ int readSenseHatJoystick() {
 
   int lkey = 0; // Use same method as handout
 
-  if (poll(&pollJoystick, 1, 0)) { // 0 timeout for non-blocking
+  if (poll(&pollJoystick, 1, 0)) { // 0 timeout for non-blocking, kind of hard to decide if timeout is allowed according to the spec..
       struct input_event ev;
       ssize_t n = read(joystick, &ev, sizeof(ev));
 
@@ -362,7 +325,6 @@ int readSenseHatJoystick() {
           lkey = ev.code;
       }
   }
-
 
   // Process the read value
   switch (lkey) {
