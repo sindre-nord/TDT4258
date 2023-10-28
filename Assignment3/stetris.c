@@ -485,7 +485,7 @@ bool clearRow() {
         color_grid[(y - 1) * game.grid.x + x] = (color){0, 0, 0};
       }
     }
-    
+
     return true;
   }
   return false;
@@ -590,7 +590,7 @@ bool sTetris(int const key) {
 
 int readKeyboard() {
   // Because of screen thing:
-  return 0;
+  //return 0;
   struct pollfd pollStdin = {
        .fd = STDIN_FILENO,
        .events = POLLIN
