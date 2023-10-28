@@ -121,7 +121,7 @@ int initializeJoystick() {
   }
   while ((entry = readdir(dir)) != NULL){
     if (fnmatch(joystick_pattern, entry->d_name, 0) == 0) {
-      printf("Found joystick: %s\n", entry->d_name);
+      //printf("Found joystick: %s\n", entry->d_name);
       char full_path[PATH_MAX];
       const char format[] = "%s/%s";
       snprintf(full_path, sizeof(full_path), format, joystick_path, entry->d_name);
@@ -133,7 +133,7 @@ int initializeJoystick() {
       }
       if (is_input_sense_hat_joystick(local_joystick)){
         closedir(dir);
-        printf("Found sense hat joystick: %s\n", entry->d_name);
+        //printf("Found sense hat joystick: %s\n", entry->d_name);
         return local_joystick;
       } else {
         close(local_joystick);
@@ -204,7 +204,7 @@ int find_frame_buffer_by_id(char *id){
     while ((entry = readdir(dir)) != NULL) {
         // printf("Found entry: %s\n", entry->d_name);
         if (fnmatch(pattern, entry->d_name, 0) == 0) { // This is true if we have a match
-            printf("Found framebuffer: %s\n", entry->d_name);
+            //printf("Found framebuffer: %s\n", entry->d_name);
             char full_path[PATH_MAX];
             const char format[] = "%s/%s";
             snprintf(full_path, sizeof(full_path), format, directory_path, entry->d_name);
@@ -216,7 +216,7 @@ int find_frame_buffer_by_id(char *id){
             }
             if (is_fb_sense_hat(local_fb)){
                 closedir(dir);
-                printf("Found sense hat framebuffer: %s\n", entry->d_name);
+                //printf("Found sense hat framebuffer: %s\n", entry->d_name);
                 return local_fb;
             } else {
                 close(local_fb);
