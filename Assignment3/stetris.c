@@ -358,7 +358,7 @@ int readSenseHatJoystick() {
       struct input_event ev;
       ssize_t n = read(joystick, &ev, sizeof(ev));
 
-      if (n == (ssize_t)sizeof(ev) && ev.type == EV_KEY && ev.value == 2) {
+      if (n == (ssize_t)sizeof(ev) && ev.type == EV_KEY && (ev.value == 2 || ev.value == 1)) {
           lkey = ev.code;
       }
   }
