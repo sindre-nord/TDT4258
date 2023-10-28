@@ -303,11 +303,37 @@ void freeSenseHat() {
   close(fb);
 }
 
+
+#include <poll.h>
 // This function should return the key that corresponds to the joystick press
 // KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, with the respective direction
 // and KEY_ENTER, when the the joystick is pressed
 // !!! when nothing was pressed you MUST return 0 !!!
 int readSenseHatJoystick() {
+  struct pollfd pollJoystick = {
+       .fd = joystick, // File descriptor
+       .events = POLLIN // Requested event
+  };
+  int pollingTimeout = 200; // Timeout in ms
+
+  // Perform an evaluate the actual poll
+  int pollingResult = poll(&pollJoystick, 1, pollingTimeout);
+  // Check the result
+  if (pollingResult == -1) {
+      // This is bad, but im not supposed to alter behavior so who knows how to deal with
+      // errors...
+      return 0;
+  }
+  if (pollingResult == 0) {
+      //printf("poll() timed out.  End program.\n");
+      return 0;
+  }
+  if (!(pollJoystick.revents & POLLIN)) {
+      // This not happening means we gucci.
+      return 0;
+  }
+
+
   // Joystick 
   struct input_event ev;
   ssize_t n = read(joystick, &ev, sizeof(ev));
