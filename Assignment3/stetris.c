@@ -571,6 +571,8 @@ bool sTetris(int const key) {
           game.tiles++;
         } else {
           gameOver();
+          // Clear the sense hat matrix
+          memset(fbdatamap, 0, fbdatasize);
         }
       }
     }
