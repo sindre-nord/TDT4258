@@ -325,7 +325,6 @@ int readSenseHatJoystick() {
       return 0;
   }
   if (pollingResult == 0) {
-      //printf("poll() timed out.  End program.\n");
       return 0;
   }
   if (!(pollJoystick.revents & POLLIN)) {
