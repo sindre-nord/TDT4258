@@ -517,6 +517,8 @@ void newGame() {
   resetPlayfield();
   // Clear the sense hat matrix
   memset(pixel_grid, 0, sizeof(u_int16_t) * 64);
+  // Clear the colors
+  memset(color_grid, 0, sizeof(color) * 64);
 }
 
 void gameOver() {
